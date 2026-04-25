@@ -82,18 +82,26 @@ th, td {
 
 <div class="section">
   <h3 class="checkin-header">ห้องพักที่ยังไม่ได้ Check-in</h3>
-  <table id="checkinTable"></table>
+  <table id="checkinTable">
+    <tr onclick="goBooking('${r.transactionId}')">
+  </table>
 </div>
 
 <div class="section">
   <h3 class="checkout-header">ห้องพักที่ยังไม่ได้ Check-out</h3>
-  <table id="checkoutTable"></table>
+  <table id="checkoutTable">
+    <tr onclick="goBooking('${r.transactionId}')">
+  </table>
 </div>
 
 <script src="js/api.js"></script>
 <script src="js/global.js?v=2"></script>
   
 <script>
+function goBooking(id){
+  window.location.href = `booking.html?id=${id}`;
+}
+  
 // ===== FORMAT DATE =====
 function formatDate(d){
   const date = new Date(d);
