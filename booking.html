@@ -60,6 +60,7 @@ button {
 }
 
 .save { background:#4CAF50; color:white; }
+.edit { background:#2196F3; color:white; }
 </style>
 </head>
 
@@ -118,12 +119,12 @@ button {
 </div>
 
 <div class="actions">
+  <button class="edit" onclick="enableEdit()">✏️ Edit</button>
   <button class="save" onclick="save()">💾 Save</button>
 </div>
 
 </div>
 
-<!-- 🔥 ย้าย script มาล่างสุด -->
 <script src="js/api.js"></script>
 <script src="js/global.js"></script>
 
@@ -136,6 +137,36 @@ function formatDate(d){
   const date = new Date(d);
   if (isNaN(date)) return "";
   return date.toISOString().split("T")[0];
+}
+
+// ===== SAFE SET VALUE =====
+function setVal(id, value){
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  if (el.type === "checkbox") {
+    el.checked = !!value;
+  } else {
+    el.value = value ?? "";
+  }
+}
+
+// ===== DISABLE CONTROL =====
+function setDisabled(state){
+  const ids = [
+    "room","people","name","checkin","checkout","note",
+    "deposit","refund","water","tissue","linenDate","extra"
+  ];
+
+  ids.forEach(id=>{
+    const el = document.getElementById(id);
+    if (el) el.disabled = state;
+  });
+}
+
+// ===== ENABLE EDIT =====
+function enableEdit(){
+  setDisabled(false);
 }
 
 // ===== LOAD ROOMS =====
@@ -160,50 +191,67 @@ async function loadAvailableRooms() {
   });
 }
 
-// ===== LOAD =====
+// ===== LOAD DATA =====
 async function load() {
-  bookingId = new URLSearchParams(window.location.search).get("id");
+  try {
+    bookingId = new URLSearchParams(window.location.search).get("id");
 
-  const res = await safeApi("getBookingDetail", { id: bookingId });
-  const d = Array.isArray(res) ? res[0] : res;
+    const res = await safeApi("getBookingDetail", { id: bookingId });
+    const d = Array.isArray(res) ? res[0] : res;
 
-  console.log(d);
+    console.log("DETAIL:", d);
 
-  if (!d) {
-    alert("ไม่พบข้อมูล");
-    return;
+    if (!d) {
+      alert("ไม่พบข้อมูล");
+      return;
+    }
+
+    // set date ก่อน
+    setVal("checkin", formatDate(d.checkin));
+    setVal("checkout", formatDate(d.checkout));
+
+    await loadAvailableRooms();
+
+    // set values
+    setVal("room", d.room);
+    setVal("name", d.name);
+    setVal("people", d.people);
+    setVal("note", d.note);
+
+    setVal("deposit", d.deposit);
+    setVal("refund", d.refund);
+    setVal("water", d.water);
+    setVal("tissue", d.tissue);
+
+    setVal("linenDate", formatDate(d.linenDate));
+    setVal("extra", d.extra);
+
+    // 🔒 lock form
+    setDisabled(true);
+
+  } catch (e) {
+    console.error(e);
+    alert("โหลดข้อมูลไม่สำเร็จ");
   }
-
-  document.getElementById("name").value = d.name || "";
-  document.getElementById("people").value = d.people || "";
-  document.getElementById("note").value = d.note || "";
-
-  document.getElementById("checkin").value = formatDate(d.checkin);
-  document.getElementById("checkout").value = formatDate(d.checkout);
-
-  await loadAvailableRooms();
-
-  document.getElementById("room").value = d.room || "";
-
-  document.getElementById("deposit").checked = !!d.deposit;
-  document.getElementById("refund").checked = !!d.refund;
-  document.getElementById("water").checked = !!d.water;
-  document.getElementById("tissue").checked = !!d.tissue;
-
-  document.getElementById("linenDate").value = formatDate(d.linenDate);
-  document.getElementById("extra").value = d.extra || "";
 }
 
 // ===== EVENTS =====
-document.getElementById("checkin").addEventListener("change", loadAvailableRooms);
-document.getElementById("checkout").addEventListener("change", loadAvailableRooms);
+const checkinEl = document.getElementById("checkin");
+const checkoutEl = document.getElementById("checkout");
+
+if (checkinEl && checkoutEl) {
+  checkinEl.addEventListener("change", loadAvailableRooms);
+  checkoutEl.addEventListener("change", loadAvailableRooms);
+}
 
 // ===== SAVE =====
 async function save() {
   const data = {
     id: bookingId,
     room: document.getElementById("room").value,
-    name: document.getElementById("name").value
+    name: document.getElementById("name").value,
+    people: document.getElementById("people").value,
+    note: document.getElementById("note").value
   };
 
   await apiPost("updateBooking", data);
