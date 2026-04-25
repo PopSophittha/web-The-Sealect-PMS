@@ -5,27 +5,65 @@
 <title>Booking Detail</title>
 
 <style>
-body { font-family: Arial; padding:20px; }
+body {
+  font-family: Arial;
+  padding:20px;
+  background:#f5f6fa;
+}
 
 .container {
-  max-width:800px;
+  max-width:900px;
   margin:auto;
+  background:white;
+  padding:20px;
+  border-radius:10px;
+}
+
+h2 {
+  margin-bottom:20px;
+}
+
+label {
+  font-weight:bold;
 }
 
 input, select {
   width:100%;
   padding:8px;
   margin:5px 0 15px;
+  border-radius:6px;
+  border:1px solid #ccc;
 }
 
-button {
-  padding:10px 15px;
-  margin-right:10px;
-  cursor:pointer;
+.row {
+  display:flex;
+  gap:20px;
+}
+
+.col {
+  flex:1;
 }
 
 .actions {
   margin-top:20px;
+}
+
+button {
+  padding:10px 15px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+.save { background:#4CAF50; color:white; }
+.checkin { background:#4a7bd0; color:white; }
+.checkout { background:#f39c12; color:white; }
+.cancel { background:#e74c3c; color:white; }
+
+.section {
+  margin-top:30px;
+  padding-top:15px;
+  border-top:1px solid #ddd;
 }
 </style>
 </head>
@@ -35,29 +73,87 @@ button {
 <div class="container">
   <h2>📋 Booking Detail</h2>
 
-  <label>เลขห้อง</label>
-  <input id="room">
+  <div class="row">
+    <div class="col">
+      <label>เลขห้อง</label>
+      <input id="room">
+    </div>
+
+    <div class="col">
+      <label>จำนวนเข้าพัก</label>
+      <input id="people" type="number">
+    </div>
+  </div>
 
   <label>ชื่อลูกค้า</label>
   <input id="name">
 
-  <label>จำนวนเข้าพัก</label>
-  <input id="people" type="number">
+  <div class="row">
+    <div class="col">
+      <label>Check-in</label>
+      <input id="checkin" type="date">
+    </div>
 
-  <label>Check-in</label>
-  <input id="checkin" type="date">
-
-  <label>Check-out</label>
-  <input id="checkout" type="date">
+    <div class="col">
+      <label>Check-out</label>
+      <input id="checkout" type="date">
+    </div>
+  </div>
 
   <label>หมายเหตุ</label>
   <input id="note">
 
+  <!-- ===================== -->
+  <!-- 💰 การเงิน / แม่บ้าน -->
+  <!-- ===================== -->
+
+  <div class="section">
+    <h3>💰 การเงิน / แม่บ้าน</h3>
+
+    <label>
+      <input type="checkbox" id="deposit">
+      มัดจำแล้ว
+    </label>
+
+    <br>
+
+    <label>
+      <input type="checkbox" id="refund">
+      คืนมัดจำแล้ว
+    </label>
+
+    <br><br>
+
+    <label>
+      <input type="checkbox" id="water" disabled>
+      วางน้ำ
+    </label>
+
+    <br>
+
+    <label>
+      <input type="checkbox" id="tissue" disabled>
+      วางทิชชู่
+    </label>
+
+    <br><br>
+
+    <label>วันที่เปลี่ยนผ้าปู</label>
+    <input type="date" id="linenDate">
+
+    <label>ค่าอื่นๆ (ความเสียหาย)</label>
+    <input type="text" id="extra">
+  </div>
+
+  <!-- ===================== -->
+  <!-- ACTION -->
+  <!-- ===================== -->
+
   <div class="actions">
-    <button onclick="save()">💾 Save</button>
-    <button onclick="checkin()">✅ Check-in</button>
-    <button onclick="checkout()">📤 Check-out</button>
-    <button onclick="cancel()">❌ Cancel</button>
+    <button class="save" onclick="save()">💾 Save</button>
+    <button class="checkin" onclick="checkin()">✅ Check-in</button>
+    <button class="checkout" onclick="checkout()">📤 Check-out</button>
+    <button class="cancel" onclick="cancel()">❌ Cancel</button>
   </div>
 </div>
 
@@ -65,9 +161,6 @@ button {
 <script src="js/global.js"></script>
 
 <script>
-console.log("URL:", window.location.href);
-console.log("ID:", bookingId);
-  
 let bookingId = null;
 
 // ===== LOAD =====
@@ -80,13 +173,36 @@ async function load() {
   }
 
   const d = await safeApi("getBookingDetail&id=" + bookingId);
+  console.log("DETAIL:", d);
 
+  if (!d || d.error) {
+    alert("ไม่พบข้อมูล");
+    return;
+  }
+
+  // basic
   document.getElementById("room").value = d.room || "";
   document.getElementById("name").value = d.name || "";
   document.getElementById("people").value = d.people || "";
-  document.getElementById("checkin").value = d.checkin || "";
-  document.getElementById("checkout").value = d.checkout || "";
+  document.getElementById("checkin").value = formatDate(d.checkin);
+  document.getElementById("checkout").value = formatDate(d.checkout);
   document.getElementById("note").value = d.note || "";
+
+  // finance
+  document.getElementById("deposit").checked = d.deposit || false;
+  document.getElementById("refund").checked = d.refund || false;
+
+  // housekeeping
+  document.getElementById("water").checked = d.water || false;
+  document.getElementById("tissue").checked = d.tissue || false;
+
+  document.getElementById("linenDate").value = formatDate(d.linenDate);
+  document.getElementById("extra").value = d.extra || "";
+
+  // 🔒 lock refund ถ้ายังไม่ checkout
+  if (!d.checkoutStatus) {
+    document.getElementById("refund").disabled = true;
+  }
 }
 
 // ===== SAVE =====
@@ -98,7 +214,12 @@ async function save() {
     people: document.getElementById("people").value,
     checkin: document.getElementById("checkin").value,
     checkout: document.getElementById("checkout").value,
-    note: document.getElementById("note").value
+    note: document.getElementById("note").value,
+
+    deposit: document.getElementById("deposit").checked,
+    refund: document.getElementById("refund").checked,
+    linenDate: document.getElementById("linenDate").value,
+    extra: document.getElementById("extra").value
   };
 
   await safeApi("updateBooking", data);
@@ -106,21 +227,15 @@ async function save() {
   alert("บันทึกสำเร็จ");
 }
 
-// ===== ACTIONS =====
+// ===== ACTION =====
 async function checkin() {
-  await safeApi("updateStatus", {
-    id: bookingId,
-    type: "checkin"
-  });
+  await safeApi("updateStatus", { id: bookingId, type: "checkin" });
   alert("Check-in สำเร็จ");
   load();
 }
 
 async function checkout() {
-  await safeApi("updateStatus", {
-    id: bookingId,
-    type: "checkout"
-  });
+  await safeApi("updateStatus", { id: bookingId, type: "checkout" });
   alert("Check-out สำเร็จ");
   load();
 }
@@ -128,15 +243,19 @@ async function checkout() {
 async function cancel() {
   if (!confirm("ยืนยันยกเลิก?")) return;
 
-  await safeApi("updateStatus", {
-    id: bookingId,
-    type: "cancel"
-  });
-
+  await safeApi("updateStatus", { id: bookingId, type: "cancel" });
   alert("ยกเลิกแล้ว");
   load();
 }
 
+// ===== FORMAT DATE =====
+function formatDate(d){
+  if (!d) return "";
+  const date = new Date(d);
+  return date.toISOString().split("T")[0];
+}
+
+// ===== INIT =====
 load();
 </script>
 
