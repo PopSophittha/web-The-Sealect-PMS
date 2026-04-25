@@ -138,15 +138,18 @@ async function loadAvailableRooms(selectedRoom = null) {
   const checkout = document.getElementById("checkout").value;
   const select = document.getElementById("room");
 
+  console.log("LOAD ROOMS WITH:", selectedRoom);
+
   select.innerHTML = "<option value=''>-- เลือกห้อง --</option>";
 
   if (!checkin || !checkout) return;
 
   const rooms = await safeApi("getAvailableRooms", { checkin, checkout });
 
+  console.log("ROOM LIST:", rooms);
+
   if (!Array.isArray(rooms)) return;
 
-  // 🔥 เพิ่มทุกห้องที่ว่าง
   rooms.forEach(r => {
     const opt = document.createElement("option");
     opt.value = r.room;
@@ -154,15 +157,18 @@ async function loadAvailableRooms(selectedRoom = null) {
     select.appendChild(opt);
   });
 
-  // 🔥 ถ้าห้องเดิมไม่อยู่ → เพิ่มกลับเข้าไป
+  // 🔥 fix ห้องเดิม
   if (selectedRoom && !rooms.some(r => r.room === selectedRoom)) {
     const opt = document.createElement("option");
     opt.value = selectedRoom;
-    opt.textContent = `${selectedRoom} (ห้องเดิม)`;
+    opt.textContent = `${selectedRoom} (เดิม)`;
     select.appendChild(opt);
   }
 
+  // 🔥 set ค่า (ต้องอยู่ท้ายสุดเท่านั้น)
   select.value = selectedRoom || "";
+
+  console.log("FINAL SELECT VALUE:", select.value);
 }
   
 // ===== LOAD =====
@@ -176,6 +182,7 @@ async function load() {
     return;
   }
 
+  // set ค่า
   document.getElementById("name").value = d.name || "";
   document.getElementById("people").value = d.people || "";
   document.getElementById("note").value = d.note || "";
@@ -183,15 +190,10 @@ async function load() {
   document.getElementById("checkin").value = formatDate(d.checkin);
   document.getElementById("checkout").value = formatDate(d.checkout);
 
+  // 🔥 สำคัญ: ส่ง room เข้าไปตอนโหลด
   await loadAvailableRooms(d.room);
 
-  document.getElementById("deposit").checked = !!d.deposit;
-  document.getElementById("refund").checked = !!d.refund;
-  document.getElementById("water").checked = !!d.water;
-  document.getElementById("tissue").checked = !!d.tissue;
-
-  document.getElementById("linenDate").value = formatDate(d.linenDate);
-  document.getElementById("extra").value = d.extra || "";
+  console.log("SET ROOM:", d.room);
 
   setViewMode();
 }
@@ -228,9 +230,13 @@ async function save() {
 }
 
 // ===== EVENTS =====
-document.getElementById("checkin").addEventListener("change", loadAvailableRooms);
-document.getElementById("checkout").addEventListener("change", loadAvailableRooms);
+document.getElementById("checkin").addEventListener("change", () => {
+  loadAvailableRooms(document.getElementById("room").value);
+});
 
+document.getElementById("checkout").addEventListener("change", () => {
+  loadAvailableRooms(document.getElementById("room").value);
+});
 load();
 </script>
 
