@@ -82,16 +82,12 @@ th, td {
 
 <div class="section">
   <h3 class="checkin-header">ห้องพักที่ยังไม่ได้ Check-in</h3>
-  <table id="checkinTable">
-    <tr onclick="goBooking('${r.transactionId}')">
-  </table>
+  <table id="checkinTable"></table>
 </div>
 
 <div class="section">
   <h3 class="checkout-header">ห้องพักที่ยังไม่ได้ Check-out</h3>
-  <table id="checkoutTable">
-    <tr onclick="goBooking('${r.transactionId}')">
-  </table>
+  <table id="checkoutTable"></table>
 </div>
 
 <script src="js/api.js"></script>
@@ -126,7 +122,7 @@ function renderTable(data, tableId){
   } else {
     data.forEach(r => {
       html += `
-      <tr>
+      <tr onclick="goBooking('${r.id}')" style="cursor:pointer">
         <td>${r.room}</td>
         <td>${r.name}</td>
         <td>${r.people}</td>
