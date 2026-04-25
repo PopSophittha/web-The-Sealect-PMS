@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbxsHCaO0rJUv-xQobPgUX8J5Sk8eShrHpyXo748fodd2wmGphgXGTDF3yqtbJ3ztpvH/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzJ7VIlnNgnAINLqBRGDYe7X1I7gzwrjN7oumTjZGRGg9GLKCbl3XZW6I2xEKy0TRQ1/exec";
 
 // ===== GET =====
 async function apiGet(action, params = {}) {
