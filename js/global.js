@@ -1,55 +1,47 @@
-// ===== GLOBAL STATE =====
-let isLoading = false;
+// ===== STATE =====
+let loadingCount = 0;
 
-// ===== LOADING =====
+// ===== CREATE LOADING =====
+function createLoading() {
+  if (document.getElementById("global-loading")) return;
+
+  const el = document.createElement("div");
+  el.id = "global-loading";
+
+  el.innerHTML = `
+    <div class="loading-backdrop"></div>
+    <div class="loading-content">
+      <div class="spinner"></div>
+    </div>
+  `;
+
+  document.body.appendChild(el);
+}
+
+// ===== SHOW =====
 function showLoading() {
-  if (isLoading) return;
-  isLoading = true;
+  loadingCount++;
+  createLoading();
 
-  let el = document.getElementById("global-loading");
-  if (!el) {
-    el = document.createElement("div");
-    el.id = "global-loading";
-    el.innerHTML = `
-      <div class="loading-box">
-        <div class="spinner"></div>
-        <div>Loading...</div>
-      </div>
-    `;
-    document.body.appendChild(el);
-  }
-
+  const el = document.getElementById("global-loading");
   el.style.display = "flex";
 }
 
+// ===== HIDE =====
 function hideLoading() {
-  isLoading = false;
+  loadingCount--;
+  if (loadingCount > 0) return;
+
   const el = document.getElementById("global-loading");
   if (el) el.style.display = "none";
 }
 
-// ===== BUTTON LOCK =====
-function lockButton(btn) {
-  if (!btn) return;
-  btn.disabled = true;
-  btn.dataset.originalText = btn.innerText;
-  btn.innerText = "Loading...";
-}
-
-function unlockButton(btn) {
-  if (!btn) return;
-  btn.disabled = false;
-  btn.innerText = btn.dataset.originalText || "Submit";
-}
-
-// ===== SAFE API CALL =====
-async function safeApi(action, payload = null, btn = null) {
+// ===== SAFE API =====
+async function safeApi(action, payload = null) {
   try {
     showLoading();
-    lockButton(btn);
 
     let result;
-
     if (payload) {
       result = await apiPost(action, payload);
     } else {
@@ -60,9 +52,8 @@ async function safeApi(action, payload = null, btn = null) {
 
   } catch (err) {
     console.error(err);
-    alert("เกิดข้อผิดพลาด");
+    alert("❌ เกิดข้อผิดพลาด");
   } finally {
     hideLoading();
-    unlockButton(btn);
   }
 }
