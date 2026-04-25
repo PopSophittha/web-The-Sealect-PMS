@@ -163,54 +163,56 @@ input,select{
 
 <script>
 let bookingId;
-let originalData;
-let allRooms=[];
-let isEdit=false;
+let originalData = {};
+let allRooms = [];
+let isEdit = false;
+
+// ===== FORMAT DATE =====
+function format(d){
+  if(!d) return "";
+  return new Date(d).toISOString().split("T")[0];
+}
 
 // ===== LOAD =====
 async function load(){
   bookingId = new URLSearchParams(location.search).get("id");
 
   const d = await apiOne("getBookingDetail",{id:bookingId});
+  if(!d) return;
+
   originalData = {...d};
 
-  transactionId.innerText=d.id;
-  channel.innerText=d.channel;
+  document.getElementById("transactionId").innerText = d.id || "";
+  document.getElementById("channel").innerText = d.channel || "";
 
-  name.value=d.name||"";
-  checkin.value=format(d.checkin);
-  checkout.value=format(d.checkout);
-  note.value=d.note||"";
+  document.getElementById("name").value = d.name || "";
+  document.getElementById("checkin").value = format(d.checkin);
+  document.getElementById("checkout").value = format(d.checkout);
+  document.getElementById("note").value = d.note || "";
 
-  total.value=d.total||"";
-  paymentType.value=d.paymentType||"";
+  document.getElementById("total").value = d.total || "";
+  document.getElementById("paymentType").value = d.paymentType || "";
 
-  linenDate.value=format(d.linenDate);
-  extra.value=d.extra||"";
+  document.getElementById("linenDate").value = format(d.linenDate);
+  document.getElementById("extra").value = d.extra || "";
 
-  deposit.checked=!!d.deposit;
-  refund.checked=!!d.refund;
+  document.getElementById("deposit").checked = !!d.deposit;
+  document.getElementById("refund").checked = !!d.refund;
 
-  await loadRoomTypes(d.type,d.room);
+  await loadRoomTypes(d.type, d.room);
 
   updateButtons(d);
-
-  // default view mode
   toggleEdit(false);
 }
 
-function format(d){
-  if(!d) return "";
-  return new Date(d).toISOString().split("T")[0];
-}
-
 // ===== ROOM =====
-async function loadRoomTypes(selectedType,selectedRoom){
+async function loadRoomTypes(selectedType, selectedRoom){
   allRooms = await apiList("getRooms");
 
-  const types=[...new Set(allRooms.map(r=>r.type))];
+  const types = [...new Set(allRooms.map(r=>r.type))];
 
-  roomType.innerHTML="<option value=''>-- เลือกประเภท --</option>";
+  const roomType = document.getElementById("roomType");
+  roomType.innerHTML = "<option value=''>-- เลือกประเภท --</option>";
 
   types.forEach(t=>{
     const o=document.createElement("option");
@@ -219,30 +221,31 @@ async function loadRoomTypes(selectedType,selectedRoom){
     roomType.appendChild(o);
   });
 
-  roomType.value=selectedType||"";
+  roomType.value = selectedType || "";
 
   await loadRoomsByType(selectedRoom);
 }
 
 async function loadRoomsByType(selectedRoom){
-  const type=roomType.value;
+  const type = document.getElementById("roomType").value;
+  const room = document.getElementById("room");
 
-  room.innerHTML="<option value=''>-- เลือกห้อง --</option>";
+  room.innerHTML = "<option value=''>-- เลือกห้อง --</option>";
 
   if(!type){
-    room.disabled=true;
+    room.disabled = true;
     return;
   }
 
-  room.disabled=false;
+  room.disabled = false;
 
   const available = await apiList("getAvailableRooms",{
-    checkin:checkin.value,
-    checkout:checkout.value
+    checkin: document.getElementById("checkin").value,
+    checkout: document.getElementById("checkout").value
   });
 
   const rooms = allRooms.filter(r =>
-    r.type===type &&
+    r.type === type &&
     (available.some(a=>a.room===r.room) || r.room===selectedRoom)
   );
 
@@ -253,22 +256,19 @@ async function loadRoomsByType(selectedRoom){
     room.appendChild(o);
   });
 
-  setTimeout(()=>{
-    room.value = selectedRoom || "";
-  },0);
+  // 🔥 FIX: set ค่าแน่นอน
+  room.value = selectedRoom || "";
 }
 
 // ===== VALIDATE =====
 async function validateRoom(){
   const available = await apiList("getAvailableRooms",{
-    checkin:checkin.value,
-    checkout:checkout.value
+    checkin: checkin.value,
+    checkout: checkout.value
   });
 
   const ok = available.some(r=>r.room===room.value);
-
-  roomWarning.innerText = ok ? "" : "⚠ ห้องนี้ไม่ว่าง";
-
+  document.getElementById("roomWarning").innerText = ok ? "" : "⚠ ห้องนี้ไม่ว่าง";
   return ok;
 }
 
@@ -276,25 +276,34 @@ async function validateRoom(){
 async function save(){
 
   const ok = await validateRoom();
-  if(!ok) return;
+  if(!ok){
+    alert("❌ ห้องนี้ไม่ว่าง");
+    return;
+  }
 
-  const data={
-    id:bookingId,
-    room:room.value,
-    type:roomType.value,
-    name:name.value,
-    checkin:checkin.value,
-    checkout:checkout.value,
-    note:note.value,
-    total:total.value,
-    paymentType:paymentType.value,
-    deposit:deposit.checked,
-    refund:refund.checked,
-    linenDate:linenDate.value,
-    extra:extra.value
+  const data = {
+    ...originalData,
+
+    room: document.getElementById("room").value,
+    type: document.getElementById("roomType").value,
+    name: document.getElementById("name").value,
+    checkin: document.getElementById("checkin").value,
+    checkout: document.getElementById("checkout").value,
+    note: document.getElementById("note").value,
+
+    total: document.getElementById("total").value,
+    paymentType: document.getElementById("paymentType").value,
+
+    deposit: document.getElementById("deposit").checked,
+    refund: document.getElementById("refund").checked,
+
+    linenDate: document.getElementById("linenDate").value,
+    extra: document.getElementById("extra").value
   };
 
-  const res = await apiPost("updateBooking",data);
+  console.log("SAVE:", data);
+
+  const res = await apiPost("updateBooking", data);
 
   if(res?.error){
     alert("❌ "+res.error);
@@ -302,40 +311,37 @@ async function save(){
   }
 
   alert("✅ บันทึกแล้ว");
-  toggleEdit(false);
+  location.reload();
 }
 
 // ===== BUTTON =====
 function updateButtons(d){
   if(!d.checkinStatus){
-    btnCheckout.disabled=true;
-    btnCancel.disabled=true;
+    document.getElementById("btnCheckout").disabled = true;
+    document.getElementById("btnCancel").disabled = true;
   }
 }
 
 // ===== EDIT MODE =====
 function toggleEdit(force){
-  if(force!==undefined){
-    isEdit=force;
-  }else{
-    isEdit=!isEdit;
-  }
+  isEdit = force !== undefined ? force : !isEdit;
 
   document.querySelectorAll("input,select").forEach(el=>{
-    el.disabled=!isEdit;
+    el.disabled = !isEdit;
   });
 
-  water.disabled=true;
-  tissue.disabled=true;
+  document.getElementById("water").disabled = true;
+  document.getElementById("tissue").disabled = true;
 
-  saveBtn.style.display = isEdit ? "inline-block" : "none";
+  document.getElementById("saveBtn").style.display =
+    isEdit ? "inline-block" : "none";
 }
 
 // ===== EVENT =====
-roomType.onchange=()=>loadRoomsByType();
-room.onchange=validateRoom;
-checkin.onchange=()=>loadRoomsByType(room.value);
-checkout.onchange=()=>loadRoomsByType(room.value);
+document.getElementById("roomType").onchange = () => loadRoomsByType();
+document.getElementById("room").onchange = validateRoom;
+document.getElementById("checkin").onchange = () => loadRoomsByType(room.value);
+document.getElementById("checkout").onchange = () => loadRoomsByType(room.value);
 
 // ===== INIT =====
 load();
