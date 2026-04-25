@@ -1,41 +1,141 @@
-<h1>Booking Detail</h1>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Booking Detail</title>
 
-<input id="name" placeholder="Name">
-<input id="room" placeholder="Room">
-<input id="checkin" type="date">
-<input id="checkout" type="date">
+<style>
+body { font-family: Arial; padding:20px; }
 
-<button onclick="save()">Save</button>
+.container {
+  max-width:800px;
+  margin:auto;
+}
+
+input, select {
+  width:100%;
+  padding:8px;
+  margin:5px 0 15px;
+}
+
+button {
+  padding:10px 15px;
+  margin-right:10px;
+  cursor:pointer;
+}
+
+.actions {
+  margin-top:20px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h2>📋 Booking Detail</h2>
+
+  <label>เลขห้อง</label>
+  <input id="room">
+
+  <label>ชื่อลูกค้า</label>
+  <input id="name">
+
+  <label>จำนวนเข้าพัก</label>
+  <input id="people" type="number">
+
+  <label>Check-in</label>
+  <input id="checkin" type="date">
+
+  <label>Check-out</label>
+  <input id="checkout" type="date">
+
+  <label>หมายเหตุ</label>
+  <input id="note">
+
+  <div class="actions">
+    <button onclick="save()">💾 Save</button>
+    <button onclick="checkin()">✅ Check-in</button>
+    <button onclick="checkout()">📤 Check-out</button>
+    <button onclick="cancel()">❌ Cancel</button>
+  </div>
+</div>
 
 <script src="js/api.js"></script>
 <script src="js/global.js"></script>
 
 <script>
-const id = new URLSearchParams(window.location.search).get("id");
-const data = await safeApi("getBookingDetail&id=" + id);
-  
-if (id) {
-  apiGet("getBooking", { id }).then(d => {
-    document.getElementById("name").value = d[5];
-    document.getElementById("room").value = d[2];
-  });
-}
+let bookingId = null;
 
-function save() {
-  const data = {
-    id,
-    name: document.getElementById("name").value,
-    room: document.getElementById("room").value,
-    checkin: document.getElementById("checkin").value,
-    checkout: document.getElementById("checkout").value
-  };
+// ===== LOAD =====
+async function load() {
+  bookingId = new URLSearchParams(window.location.search).get("id");
 
-  if (id) {
-    apiPost("updateBooking", data);
-  } else {
-    apiPost("createBooking", data);
+  if (!bookingId) {
+    alert("ไม่พบ booking id");
+    return;
   }
 
-  alert("saved");
+  const d = await safeApi("getBookingDetail&id=" + bookingId);
+
+  document.getElementById("room").value = d.room || "";
+  document.getElementById("name").value = d.name || "";
+  document.getElementById("people").value = d.people || "";
+  document.getElementById("checkin").value = d.checkin || "";
+  document.getElementById("checkout").value = d.checkout || "";
+  document.getElementById("note").value = d.note || "";
 }
+
+// ===== SAVE =====
+async function save() {
+  const data = {
+    id: bookingId,
+    room: document.getElementById("room").value,
+    name: document.getElementById("name").value,
+    people: document.getElementById("people").value,
+    checkin: document.getElementById("checkin").value,
+    checkout: document.getElementById("checkout").value,
+    note: document.getElementById("note").value
+  };
+
+  await safeApi("updateBooking", data);
+
+  alert("บันทึกสำเร็จ");
+}
+
+// ===== ACTIONS =====
+async function checkin() {
+  await safeApi("updateStatus", {
+    id: bookingId,
+    type: "checkin"
+  });
+  alert("Check-in สำเร็จ");
+  load();
+}
+
+async function checkout() {
+  await safeApi("updateStatus", {
+    id: bookingId,
+    type: "checkout"
+  });
+  alert("Check-out สำเร็จ");
+  load();
+}
+
+async function cancel() {
+  if (!confirm("ยืนยันยกเลิก?")) return;
+
+  await safeApi("updateStatus", {
+    id: bookingId,
+    type: "cancel"
+  });
+
+  alert("ยกเลิกแล้ว");
+  load();
+}
+
+load();
 </script>
+
+</body>
+</html>
