@@ -170,7 +170,7 @@ function enableEdit(){
 }
 
 // ===== LOAD ROOMS =====
-async function loadAvailableRooms() {
+async function loadAvailableRooms(selectedRoom = null) {
   const checkin = document.getElementById("checkin").value;
   const checkout = document.getElementById("checkout").value;
   const select = document.getElementById("room");
@@ -189,6 +189,11 @@ async function loadAvailableRooms() {
     opt.textContent = r.room + " - " + r.type;
     select.appendChild(opt);
   });
+
+  // ✅ set หลัง append เสมอ
+  if (selectedRoom) {
+    select.value = selectedRoom;
+  }
 }
 
 // ===== LOAD DATA =====
@@ -196,12 +201,11 @@ async function load() {
   try {
     bookingId = new URLSearchParams(window.location.search).get("id");
 
-    const res = await safeApi("getBookingDetail", { id: bookingId });
-    const d = Array.isArray(res) ? res[0] : res;
-
+    const d = await safeApi("getBookingDetail", { id: bookingId });
     console.log("DETAIL:", d);
 
-    if (!d) {
+    if (!d || d.error) {
+      console.error("API ERROR:", d);
       alert("ไม่พบข้อมูล");
       return;
     }
@@ -210,8 +214,8 @@ async function load() {
     setVal("checkin", formatDate(d.checkin));
     setVal("checkout", formatDate(d.checkout));
 
-    await loadAvailableRooms();
-
+    await loadAvailableRooms(d.room);
+    
     // set values
     setVal("room", d.room);
     setVal("name", d.name);
