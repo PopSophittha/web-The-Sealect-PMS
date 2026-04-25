@@ -1,0 +1,10 @@
+<h1>Calendar</h1>
+<div id="calendar"></div>
+
+<script src="js/api.js"></script>
+<script>
+apiGet("getBookings").then(data => {
+  document.getElementById("calendar").innerHTML =
+    JSON.stringify(data);
+});
+</script>
