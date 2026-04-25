@@ -5,8 +5,10 @@ async function apiGet(action, params = {}) {
   const url = new URL(API_URL);
   url.searchParams.set("action", action);
 
-  Object.keys(params).forEach(k => {
-    url.searchParams.set(k, params[k]);
+  Object.entries(params || {}).forEach(([k, v]) => {
+    if (v !== undefined && v !== null) {
+      url.searchParams.set(k, v);
+    }
   });
 
   const res = await fetch(url);
@@ -19,7 +21,7 @@ async function apiPost(action, data = {}) {
     method: "POST",
     body: JSON.stringify({
       action,
-      ...data   // 🔥 flatten
+      ...data
     })
   });
 
@@ -27,24 +29,28 @@ async function apiPost(action, data = {}) {
 }
 
 // ===== SAFE API =====
-async function safeApi(action, params = null) {
+async function safeApi(action, params = {}) {
   showLoading();
 
   try {
-    let result;
+    // 🔥 ใช้ GET เหมือน getAvailableRooms ทุกตัว
+    const res = await apiGet(action, params);
 
-    if (params) {
-      // ถ้ามี params → ใช้ GET
-      result = await apiGet(action, params);
-    } else {
-      result = await apiGet(action);
+    // 🔥 normalize response กันพัง
+    const data = Array.isArray(res) ? res[0] : res;
+
+    if (!data || data.error) {
+      console.warn("API error:", data);
+      return null;
     }
 
-    return result;
+    return data;
 
   } catch (e) {
     console.error(e);
     alert("❌ API error");
+    return null;
+
   } finally {
     hideLoading();
   }
