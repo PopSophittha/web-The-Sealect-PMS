@@ -76,7 +76,7 @@ button {
   <div class="row">
     <div class="col">
       <label>เลขห้อง</label>
-      <input id="room">
+      <select id="room"></select>
     </div>
 
     <div class="col">
@@ -255,6 +255,43 @@ function formatDate(d){
   return date.toISOString().split("T")[0];
 }
 
+// ===== load avilable room =====
+  async function loadAvailableRooms() {
+  const checkin = document.getElementById("checkin").value;
+  const checkout = document.getElementById("checkout").value;
+
+  if (!checkin || !checkout) return;
+
+  const rooms = await safeApi(
+    `getAvailableRooms&checkin=${checkin}&checkout=${checkout}`
+  );
+
+  const select = document.getElementById("room");
+  select.innerHTML = "";
+
+  if (!rooms || rooms.length === 0) {
+    select.innerHTML = "<option>ไม่มีห้องว่าง</option>";
+    return;
+  }
+
+  rooms.forEach(r => {
+    const opt = document.createElement("option");
+    opt.value = r.room;
+    opt.textContent = `${r.room} - ${r.type}`;
+    select.appendChild(opt);
+  });
+}
+  await loadAvailableRooms();
+
+if (d.room) {
+  document.getElementById("room").value = d.room;
+}
+document.getElementById("checkin")
+  .addEventListener("change", loadAvailableRooms);
+
+document.getElementById("checkout")
+  .addEventListener("change", loadAvailableRooms);
+  
 // ===== INIT =====
 load();
 </script>
