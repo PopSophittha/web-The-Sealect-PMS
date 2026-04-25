@@ -56,11 +56,8 @@ async function safeApi(action, params = {}) {
       console.error("❌ API error:", res);
       return res; // 👈 สำคัญ: ส่งกลับไปให้หน้าเว็บเห็น
     }
-
-    // 🔥 ค่อย normalize ตรงนี้
-    const data = Array.isArray(res) ? res[0] : res;
-
-    return data;
+    
+    return res;
 
   } catch (e) {
     console.error("❌ FETCH ERROR:", e);
