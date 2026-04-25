@@ -90,17 +90,19 @@ th, td {
   <table id="checkoutTable"></table>
 </div>
 
-<script src="js/global.js?v=2"></script>
-<script src="js/api.js"></script>
-  
+<script src="js/global.js?v=3"></script>
+<script src="js/api.js?v=3"></script>
+
 <script>
+// ===== NAV =====
 function goBooking(id){
-    console.log("CLICK ID:", id);
+  console.log("CLICK ID:", id);
   window.location.href = `booking.html?id=${id}`;
 }
-  
+
 // ===== FORMAT DATE =====
 function formatDate(d){
+  if (!d) return "";
   const date = new Date(d);
   return date.toLocaleDateString("th-TH", {
     day: "2-digit",
@@ -109,13 +111,18 @@ function formatDate(d){
   });
 }
 
-// ===== RENDER TABLE =====
+// ===== TABLE =====
 function renderTable(data, tableId){
   let html = `
   <tr>
-    <th>เลขห้อง</th><th>ชื่อนามสกุลลูกค้า</th><th>จำนวนเข้าพัก</th>
-    <th>วันที่ check-iin</th><th>วันที่ check-out</th><th>จำนวนคืนเข้าพัก</th>
-    <th>การชำระเงิน</th><th>หมายเหตุ</th>
+    <th>เลขห้อง</th>
+    <th>ชื่อลูกค้า</th>
+    <th>จำนวน</th>
+    <th>Check-in</th>
+    <th>Check-out</th>
+    <th>คืน</th>
+    <th>ชำระเงิน</th>
+    <th>หมายเหตุ</th>
   </tr>`;
 
   if (!data || data.length === 0) {
@@ -124,13 +131,13 @@ function renderTable(data, tableId){
     data.forEach(r => {
       html += `
       <tr onclick="goBooking('${r.id}')" style="cursor:pointer">
-        <td>${r.room}</td>
-        <td>${r.name}</td>
-        <td>${r.people}</td>
+        <td>${r.room || "-"}</td>
+        <td>${r.name || "-"}</td>
+        <td>${r.people || "-"}</td>
         <td>${formatDate(r.checkinDate)}</td>
         <td>${formatDate(r.checkoutDate)}</td>
-        <td>${r.nights}</td>
-        <td>${r.payment || ""}</td>
+        <td>${r.nights || "-"}</td>
+        <td>${r.payment || "-"}</td>
         <td>${r.note || ""}</td>
       </tr>`;
     });
@@ -139,41 +146,47 @@ function renderTable(data, tableId){
   document.getElementById(tableId).innerHTML = html;
 }
 
-// ===== LOAD =====
+// ===== LOAD (ใช้ API ใหม่) =====
 async function load() {
+  showLoading();
+
   try {
-    const d = await safeApi("getDashboard");
+    const d = await apiGet("getDashboard");
 
-    if (!d) throw new Error("ไม่มีข้อมูลจาก API");
+    console.log("DASHBOARD:", d);
 
-    // date
+    if (!d || d.error) {
+      throw new Error(d?.error || "ไม่มีข้อมูล");
+    }
+
+    // ===== DATE =====
     document.getElementById("today").innerText =
       new Date().toLocaleDateString("th-TH");
 
-    // cards
+    // ===== CARDS =====
     document.getElementById("c1").innerText = d.checkin ?? 0;
     document.getElementById("c2").innerText = d.checkout ?? 0;
     document.getElementById("c3").innerText = d.stay ?? 0;
     document.getElementById("c4").innerText = d.available ?? 0;
     document.getElementById("c5").innerText = d.reservedRooms ?? 0;
 
-    // tables
+    // ===== TABLE =====
     renderTable(d.pendingCheckin, "checkinTable");
     renderTable(d.pendingCheckout, "checkoutTable");
+
   } catch (err) {
-    console.error(err);
-    alert("❌ โหลดข้อมูลไม่สำเร็จ\nลองรีเฟรชหน้าอีกครั้ง");
+    console.error("❌ DASHBOARD ERROR:", err);
+    alert("โหลด Dashboard ไม่สำเร็จ");
+  } finally {
+    hideLoading();
   }
 }
 
 // ===== INIT =====
 load();
-  
-// 🔄 AUTO REFRESH ทุก 5 นาที
-setInterval(load, 300000);
 
-  showLoading();
-setTimeout(hideLoading, 2000);
+// 🔄 refresh ทุก 5 นาที
+setInterval(load, 300000);
 </script>
   
 </body>
