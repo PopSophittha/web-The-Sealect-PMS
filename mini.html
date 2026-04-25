@@ -1,0 +1,9 @@
+<div id="mini"></div>
+
+<script src="js/api.js"></script>
+<script>
+apiGet("getDashboard").then(d => {
+  document.getElementById("mini").innerHTML =
+    `IN ${d.checkin} | OUT ${d.checkout} | STAY ${d.stay}`;
+});
+</script>
