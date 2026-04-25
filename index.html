@@ -85,76 +85,79 @@ th, td {
 <script src="js/global.js"></script>
   
 <script>
+// ===== FORMAT DATE =====
 function formatDate(d){
-  return new Date(d).toLocaleDateString("th-TH");
+  const date = new Date(d);
+  return date.toLocaleDateString("th-TH", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  });
 }
 
+// ===== RENDER TABLE =====
+function renderTable(data, tableId){
+  let html = `
+  <tr>
+    <th>ห้อง</th><th>ชื่อ</th><th>จำนวน</th>
+    <th>เข้า</th><th>ออก</th><th>คืน</th>
+    <th>จ่าย</th><th>หมายเหตุ</th>
+  </tr>`;
+
+  if (!data || data.length === 0) {
+    html += `<tr><td colspan="8" style="color:#888">ไม่มีรายการ</td></tr>`;
+  } else {
+    data.forEach(r => {
+      html += `
+      <tr>
+        <td>${r.room}</td>
+        <td>${r.name}</td>
+        <td>${r.people}</td>
+        <td>${formatDate(r.checkinDate)}</td>
+        <td>${formatDate(r.checkoutDate)}</td>
+        <td>${r.nights}</td>
+        <td>${r.payment || ""}</td>
+        <td>${r.note || ""}</td>
+      </tr>`;
+    });
+  }
+
+  document.getElementById(tableId).innerHTML = html;
+}
+
+// ===== LOAD =====
 async function load() {
-  const d = await apiGet("getDashboard");
+  try {
+    const d = await safeApi("getDashboard");
 
-  // date header
-  document.getElementById("today").innerText =
-    new Date().toLocaleDateString("th-TH");
+    if (!d) throw new Error("ไม่มีข้อมูลจาก API");
 
-  // cards
-  document.getElementById("c1").innerText = d.checkin;
-  document.getElementById("c2").innerText = d.checkout;
-  document.getElementById("c3").innerText = d.stay;
-  document.getElementById("c4").innerText = d.available;
-  document.getElementById("c5").innerText = d.reservedRooms;
+    // date
+    document.getElementById("today").innerText =
+      new Date().toLocaleDateString("th-TH");
 
-  // ===== CHECK-IN TABLE =====
-  let htmlIn = `
-  <tr>
-    <th>ห้อง</th><th>ชื่อ</th><th>จำนวน</th>
-    <th>เข้า</th><th>ออก</th><th>คืน</th>
-    <th>จ่าย</th><th>หมายเหตุ</th>
-  </tr>`;
+    // cards
+    document.getElementById("c1").innerText = d.checkin ?? 0;
+    document.getElementById("c2").innerText = d.checkout ?? 0;
+    document.getElementById("c3").innerText = d.stay ?? 0;
+    document.getElementById("c4").innerText = d.available ?? 0;
+    document.getElementById("c5").innerText = d.reservedRooms ?? 0;
 
-  d.pendingCheckin.forEach(r => {
-    htmlIn += `
-    <tr>
-      <td>${r.room}</td>
-      <td>${r.name}</td>
-      <td>${r.people}</td>
-      <td>${formatDate(r.checkinDate)}</td>
-      <td>${formatDate(r.checkoutDate)}</td>
-      <td>${r.nights}</td>
-      <td>${r.payment || ""}</td>
-      <td>${r.note || ""}</td>
-    </tr>`;
-  });
+    // tables
+    renderTable(d.pendingCheckin, "checkinTable");
+    renderTable(d.pendingCheckout, "checkoutTable");
 
-  document.getElementById("checkinTable").innerHTML = htmlIn;
-
-  // ===== CHECK-OUT TABLE =====
-  let htmlOut = htmlIn;
-
-  htmlOut = `
-  <tr>
-    <th>ห้อง</th><th>ชื่อ</th><th>จำนวน</th>
-    <th>เข้า</th><th>ออก</th><th>คืน</th>
-    <th>จ่าย</th><th>หมายเหตุ</th>
-  </tr>`;
-
-  d.pendingCheckout.forEach(r => {
-    htmlOut += `
-    <tr>
-      <td>${r.room}</td>
-      <td>${r.name}</td>
-      <td>${r.people}</td>
-      <td>${formatDate(r.checkinDate)}</td>
-      <td>${formatDate(r.checkoutDate)}</td>
-      <td>${r.nights}</td>
-      <td>${r.payment || ""}</td>
-      <td>${r.note || ""}</td>
-    </tr>`;
-  });
-
-  document.getElementById("checkoutTable").innerHTML = htmlOut;
+  } catch (err) {
+    console.error(err);
+    alert("❌ โหลดข้อมูลไม่สำเร็จ\nลองรีเฟรชหน้าอีกครั้ง");
+  }
 }
 
+// ===== INIT =====
 load();
+
+// 🔄 AUTO REFRESH ทุก 5 นาที
+setInterval(load, 300000);
 </script>
 
 </body>
