@@ -58,18 +58,17 @@ th, td {
 
 <body>
 
-<div class="header">🏨 รายการเข้าพักประจำวัน</div>
-
+<div class="header">
+  🏨 รายการเข้าพักประจำวัน
+  <div id="today"></div>
+</div>
+  
 <div class="cards">
-  <div class="card green">
-    ห้องที่ Check-in<br><h2 id="c1">0</h2>
-  </div>
-  <div class="card red">
-    ห้องที่ Check-out<br><h2 id="c2">0</h2>
-  </div>
-  <div class="card blue">
-    จำนวนห้องที่อยู่ต่อ<br><h2 id="c3">0</h2>
-  </div>
+  <div class="card green">Check-in<br><h2 id="c1"></h2></div>
+  <div class="card red">Check-out<br><h2 id="c2"></h2></div>
+  <div class="card blue">Stay<br><h2 id="c3"></h2></div>
+  <div class="card">ว่าง<br><h2 id="c4"></h2></div>
+  <div class="card">สำรอง<br><h2 id="c5"></h2></div>
 </div>
 
 <div class="section">
@@ -92,22 +91,23 @@ function formatDate(d){
 async function load() {
   const d = await apiGet("getDashboard");
 
+  // date header
+  document.getElementById("today").innerText =
+    new Date().toLocaleDateString("th-TH");
+
   // cards
   document.getElementById("c1").innerText = d.checkin;
   document.getElementById("c2").innerText = d.checkout;
   document.getElementById("c3").innerText = d.stay;
+  document.getElementById("c4").innerText = d.available;
+  document.getElementById("c5").innerText = d.reservedRooms;
 
   // ===== CHECK-IN TABLE =====
   let htmlIn = `
   <tr>
-    <th>เลขห้อง</th>
-    <th>ชื่อ</th>
-    <th>จำนวน</th>
-    <th>check-in</th>
-    <th>check-out</th>
-    <th>คืน</th>
-    <th>การชำระเงิน</th>
-    <th>หมายเหตุ</th>
+    <th>ห้อง</th><th>ชื่อ</th><th>จำนวน</th>
+    <th>เข้า</th><th>ออก</th><th>คืน</th>
+    <th>จ่าย</th><th>หมายเหตุ</th>
   </tr>`;
 
   d.pendingCheckin.forEach(r => {
@@ -127,18 +127,13 @@ async function load() {
   document.getElementById("checkinTable").innerHTML = htmlIn;
 
   // ===== CHECK-OUT TABLE =====
-  let htmlOut = htmlIn.replaceAll("checkinDate","checkoutDate");
+  let htmlOut = htmlIn;
 
   htmlOut = `
   <tr>
-    <th>เลขห้อง</th>
-    <th>ชื่อ</th>
-    <th>จำนวน</th>
-    <th>check-in</th>
-    <th>check-out</th>
-    <th>คืน</th>
-    <th>การชำระเงิน</th>
-    <th>หมายเหตุ</th>
+    <th>ห้อง</th><th>ชื่อ</th><th>จำนวน</th>
+    <th>เข้า</th><th>ออก</th><th>คืน</th>
+    <th>จ่าย</th><th>หมายเหตุ</th>
   </tr>`;
 
   d.pendingCheckout.forEach(r => {
