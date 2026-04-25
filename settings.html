@@ -1,0 +1,10 @@
+<h1>Settings</h1>
+<div id="settings"></div>
+
+<script src="js/api.js"></script>
+<script>
+apiGet("getSettings").then(data => {
+  document.getElementById("settings").innerHTML =
+    JSON.stringify(data);
+});
+</script>
