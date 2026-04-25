@@ -1,0 +1,33 @@
+<h1>Bookings</h1>
+<button onclick="create()">+ เพิ่ม</button>
+<div id="list"></div>
+
+<script src="js/api.js"></script>
+<script>
+async function load() {
+  const data = await apiGet("getBookings");
+
+  let html = "<table>";
+  data.forEach((r, i) => {
+    if (i === 0) return;
+    html += `<tr onclick="openBooking(${r[1]})">
+      <td>${r[2]}</td>
+      <td>${r[5]}</td>
+      <td>${r[8]}</td>
+    </tr>`;
+  });
+  html += "</table>";
+
+  document.getElementById("list").innerHTML = html;
+}
+
+function openBooking(id) {
+  location.href = `booking.html?id=${id}`;
+}
+
+function create() {
+  location.href = "booking.html";
+}
+
+load();
+</script>
