@@ -1,3 +1,4 @@
+// ===== LOADING =====
 let loadingCount = 0;
 
 function createLoading() {
@@ -22,16 +23,37 @@ function createLoading() {
 
 function showLoading() {
   loadingCount++;
-
   const el = createLoading();
-  el.style.display = "flex";   // 🔥 บังคับโชว์ตรงนี้
+  el.style.display = "flex";
 }
 
 function hideLoading() {
   loadingCount--;
-
   if (loadingCount > 0) return;
 
   const el = document.getElementById("global-loading");
   if (el) el.style.display = "none";
+}
+
+// ===== SAFE API =====
+async function safeApi(action, payload = null) {
+  try {
+    showLoading();
+
+    let result;
+    if (payload) {
+      result = await apiPost(action, payload);
+    } else {
+      result = await apiGet(action);
+    }
+
+    return result;
+
+  } catch (err) {
+    console.error(err);
+    alert("❌ เกิดข้อผิดพลาด");
+    throw err;
+  } finally {
+    hideLoading();
+  }
 }
