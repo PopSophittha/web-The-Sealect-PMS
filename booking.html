@@ -84,10 +84,21 @@ button {
 <h3>💰 สถานะ</h3>
 
 <div class="checkbox-group">
-  <div class="checkbox-item"><input type="checkbox" id="deposit"> มัดจำ</div>
-  <div class="checkbox-item"><input type="checkbox" id="refund"> คืนมัดจำ</div>
-  <div class="checkbox-item"><input type="checkbox" id="water" disabled> น้ำ</div>
-  <div class="checkbox-item"><input type="checkbox" id="tissue" disabled> ทิชชู่</div>
+  <label class="checkbox-item">
+    <input type="checkbox" id="deposit"> มัดจำแล้ว
+  </label>
+
+  <label class="checkbox-item">
+    <input type="checkbox" id="refund"> คืนมัดจำแล้ว
+  </label>
+
+  <label class="checkbox-item">
+    <input type="checkbox" id="water" disabled> วางน้ำ
+  </label>
+
+  <label class="checkbox-item">
+    <input type="checkbox" id="tissue" disabled> วางทิชชู่
+  </label>
 </div>
 
 <div class="row">
@@ -122,7 +133,7 @@ function formatDate(d){
 }
 
 // ===== LOAD ROOMS =====
-async function loadAvailableRooms(selectedRoom=null) {
+async function loadAvailableRooms(selectedRoom = null) {
   const checkin = document.getElementById("checkin").value;
   const checkout = document.getElementById("checkout").value;
   const select = document.getElementById("room");
@@ -135,24 +146,25 @@ async function loadAvailableRooms(selectedRoom=null) {
 
   if (!Array.isArray(rooms)) return;
 
+  // 🔥 เพิ่มทุกห้องที่ว่าง
   rooms.forEach(r => {
     const opt = document.createElement("option");
     opt.value = r.room;
-    opt.textContent = r.room + " - " + r.type;
+    opt.textContent = `${r.room} - ${r.type}`;
     select.appendChild(opt);
   });
 
-  // 🔥 ถ้าไม่มีห้องเดิม → เพิ่มเข้าไป
-  if (selectedRoom && ![...select.options].some(o => o.value === selectedRoom)) {
+  // 🔥 ถ้าห้องเดิมไม่อยู่ → เพิ่มกลับเข้าไป
+  if (selectedRoom && !rooms.some(r => r.room === selectedRoom)) {
     const opt = document.createElement("option");
     opt.value = selectedRoom;
-    opt.textContent = selectedRoom + " (เดิม)";
+    opt.textContent = `${selectedRoom} (ห้องเดิม)`;
     select.appendChild(opt);
   }
 
   select.value = selectedRoom || "";
 }
-
+  
 // ===== LOAD =====
 async function load() {
   bookingId = new URLSearchParams(window.location.search).get("id");
