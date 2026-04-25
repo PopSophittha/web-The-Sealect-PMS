@@ -270,9 +270,15 @@ async function save(){
 
 // ===== BUTTON =====
 function updateButtons(d){
-  if(!d.checkinStatus){
-    btnCheckout.disabled=true;
-    btnCancel.disabled=true;
+  const checkoutBtn = document.getElementById("btnCheckout");
+  const cancelBtn = document.getElementById("btnCancel");
+
+  if (!d.checkinStatus){
+    checkoutBtn.disabled = true;
+    cancelBtn.disabled = true;
+  } else {
+    checkoutBtn.disabled = false;
+    cancelBtn.disabled = false;
   }
 }
 
