@@ -8,11 +8,27 @@ function createLoading() {
     el = document.createElement("div");
     el.id = "global-loading";
 
+    // 🔥 ใส่ style ตรงนี้เลย (กัน CSS พัง)
+    el.style.position = "fixed";
+    el.style.top = "0";
+    el.style.left = "0";
+    el.style.width = "100%";
+    el.style.height = "100%";
+    el.style.display = "none";
+    el.style.alignItems = "center";
+    el.style.justifyContent = "center";
+    el.style.background = "rgba(0,0,0,0.5)";
+    el.style.zIndex = "999999";
+
     el.innerHTML = `
-      <div class="loading-backdrop"></div>
-      <div class="loading-content">
-        <div class="spinner"></div>
-      </div>
+      <div style="
+        width:60px;
+        height:60px;
+        border:6px solid #ddd;
+        border-top:6px solid #4a7bd0;
+        border-radius:50%;
+        animation: spin 0.8s linear infinite;
+      "></div>
     `;
 
     document.body.appendChild(el);
