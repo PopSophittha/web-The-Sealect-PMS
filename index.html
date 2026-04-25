@@ -1,17 +1,51 @@
-<h1>Dashboard</h1>
+<h1>🏨 Dashboard</h1>
 
-<div id="stats"></div>
+<div id="cards"></div>
+
+<h2>📥 ยังไม่ Check-in</h2>
+<table id="checkinTable"></table>
+
+<h2>📤 ยังไม่ Check-out</h2>
+<table id="checkoutTable"></table>
 
 <script src="js/api.js"></script>
 <script>
 async function load() {
-  const data = await apiGet("getDashboard");
+  const d = await apiGet("getDashboard");
 
-  document.getElementById("stats").innerHTML = `
-    Check-in: ${data.checkin} <br>
-    Check-out: ${data.checkout} <br>
-    Stay: ${data.stay}
+  // ===== CARDS =====
+  document.getElementById("cards").innerHTML = `
+    <div style="background:#d4edda;padding:10px;margin:5px">
+      Check-in: ${d.checkin}
+    </div>
+    <div style="background:#f8d7da;padding:10px;margin:5px">
+      Check-out: ${d.checkout}
+    </div>
+    <div style="background:#d1ecf1;padding:10px;margin:5px">
+      Stay: ${d.stay}
+    </div>
   `;
+
+  // ===== TABLE CHECK-IN =====
+  let htmlIn = "<tr><th>Room</th><th>Name</th></tr>";
+  d.pendingCheckin.forEach(r => {
+    htmlIn += `<tr>
+      <td>${r.room}</td>
+      <td>${r.name}</td>
+    </tr>`;
+  });
+  document.getElementById("checkinTable").innerHTML = htmlIn;
+
+  // ===== TABLE CHECK-OUT =====
+  let htmlOut = "<tr><th>Room</th><th>Name</th></tr>";
+  d.pendingCheckout.forEach(r => {
+    htmlOut += `<tr>
+      <td>${r.room}</td>
+      <td>${r.name}</td>
+    </tr>`;
+  });
+  document.getElementById("checkoutTable").innerHTML = htmlOut;
 }
+
 load();
 </script>
