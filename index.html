@@ -1,0 +1,17 @@
+<h1>Dashboard</h1>
+
+<div id="stats"></div>
+
+<script src="js/api.js"></script>
+<script>
+async function load() {
+  const data = await apiGet("getDashboard");
+
+  document.getElementById("stats").innerHTML = `
+    Check-in: ${data.checkin} <br>
+    Check-out: ${data.checkout} <br>
+    Stay: ${data.stay}
+  `;
+}
+load();
+</script>
