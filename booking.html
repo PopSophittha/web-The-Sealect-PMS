@@ -63,11 +63,34 @@ button{padding:10px;border:none;border-radius:6px;cursor:pointer}
 
 <!-- STATUS -->
 <h3>💰 สถานะ</h3>
-<div class="checkbox-group">
-  <label class="checkbox-item"><input type="checkbox" id="deposit"> มัดจำแล้ว</label>
-  <label class="checkbox-item"><input type="checkbox" id="refund"> คืนมัดจำแล้ว</label>
-  <label class="checkbox-item"><input type="checkbox" id="water" disabled> วางน้ำ</label>
-  <label class="checkbox-item"><input type="checkbox" id="tissue" disabled> วางทิชชู่</label>
+
+<div class="status-section">
+
+  <div class="checkbox-group">
+    <label class="checkbox-item">
+      <input type="checkbox" id="deposit"> มัดจำแล้ว
+    </label>
+
+    <label class="checkbox-item">
+      <input type="checkbox" id="refund"> คืนมัดจำแล้ว
+    </label>
+
+    <label class="checkbox-item">
+      <input type="checkbox" id="water" disabled> วางน้ำ
+    </label>
+
+    <label class="checkbox-item">
+      <input type="checkbox" id="tissue" disabled> วางทิชชู่
+    </label>
+  </div>
+
+  <!-- 🔥 ปุ่ม -->
+  <div class="status-actions">
+    <button id="btnCheckin" class="btn big green">Check-in</button>
+    <button id="btnCheckout" class="btn big gray">Check-out</button>
+    <button id="btnCancel" class="btn big red">Cancel</button>
+  </div>
+
 </div>
 
 <!-- FINANCE -->
@@ -79,15 +102,6 @@ button{padding:10px;border:none;border-radius:6px;cursor:pointer}
     <option>โอน</option>
   </select>
 </div>
-
-<!-- BUTTON -->
-<div class="actions">
-  <button id="btnCheckin" class="green">Check-in</button>
-  <button id="btnCheckout" class="gray">Check-out</button>
-  <button id="btnCancel" class="red">Cancel</button>
-  <button id="saveBtn" class="green" style="display:none">Save</button>
-</div>
-
 </div>
 
 <script src="js/global.js"></script>
@@ -207,20 +221,51 @@ function diff(oldData,newData){
 
 async function save(){
   const ok = await validateRoom();
-  if(!ok) return;
+  if (!ok) return;
 
-  const current=getForm();
-  const changed=diff(originalData,current);
+  const data = {
+    id: bookingId,
 
-  if(Object.keys(changed).length===0){
-    alert("ไม่มีการเปลี่ยน");
-    return;
+    // 🔥 ส่งค่าที่จำเป็นทั้งหมด (แต่ยังเป็น partial update)
+    room: document.getElementById("room").value,
+    type: document.getElementById("roomType").value,
+
+    name: document.getElementById("name").value,
+    people: document.getElementById("people")?.value || "",
+
+    checkin: document.getElementById("checkin").value,
+    checkout: document.getElementById("checkout").value,
+
+    note: document.getElementById("note").value,
+
+    total: document.getElementById("total").value,
+    paymentType: document.getElementById("paymentType").value,
+
+    deposit: document.getElementById("deposit").checked,
+    refund: document.getElementById("refund").checked,
+
+    linenDate: document.getElementById("linenDate").value,
+    extra: document.getElementById("extra").value
+  };
+
+  console.log("SAVE DATA:", data);
+
+  try{
+    const res = await apiPost("updateBooking", data);
+
+    console.log("SAVE RESULT:", res);
+
+    if (res && res.error){
+      alert("❌ " + res.error);
+      return;
+    }
+
+    alert("✅ บันทึกแล้ว");
+
+  }catch(e){
+    console.error(e);
+    alert("❌ save error");
   }
-
-  await apiPost("updateBooking",{id:bookingId,...changed});
-  alert("saved");
-
-  originalData={...originalData,...changed};
 }
 
 // ===== BUTTON =====
