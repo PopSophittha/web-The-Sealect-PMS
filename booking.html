@@ -218,9 +218,11 @@ async function load() {
     return;
   }
 
-  const d = await safeApi("getBookingDetail", { id: bookingId });
-
+  const res = await safeApi("getBookingDetail", { id: bookingId });
+  const d = Array.isArray(res) ? res[0] : res;
+  
   if (!d || d.error) {
+    alert(d.error);
     alert("ไม่พบข้อมูล");
     return;
   }
