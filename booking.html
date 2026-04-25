@@ -1,102 +1,124 @@
 <script>
-let bookingId = null;
+document.addEventListener("DOMContentLoaded", () => {
 
-// ===== FORMAT DATE =====
-function formatDate(d){
-  if (!d) return "";
-  const date = new Date(d);
-  if (isNaN(date)) return "";
-  return date.toISOString().split("T")[0];
-}
+  let bookingId = null;
 
-// ===== LOAD ROOMS =====
-async function loadAvailableRooms() {
-  const checkin = document.getElementById("checkin").value;
-  const checkout = document.getElementById("checkout").value;
-  const select = document.getElementById("room");
-
-  // 🔥 default option
-  select.innerHTML = "<option value=''>-- เลือกห้อง --</option>";
-
-  // disable ถ้ายังไม่เลือกวัน
-  if (!checkin || !checkout) {
-    select.disabled = true;
-    return;
+  // ===== FORMAT DATE =====
+  function formatDate(d){
+    if (!d) return "";
+    const date = new Date(d);
+    if (isNaN(date)) return "";
+    return date.toISOString().split("T")[0];
   }
 
-  select.disabled = false;
+  // ===== LOAD AVAILABLE ROOMS =====
+  async function loadAvailableRooms() {
+    const checkinEl = document.getElementById("checkin");
+    const checkoutEl = document.getElementById("checkout");
+    const roomEl = document.getElementById("room");
 
-  const rooms = await safeApi("getAvailableRooms", {
-    checkin,
-    checkout
-  });
+    if (!checkinEl || !checkoutEl || !roomEl) return;
 
-  console.log("ROOMS:", rooms);
+    const checkin = checkinEl.value;
+    const checkout = checkoutEl.value;
 
-  if (!Array.isArray(rooms)) return;
+    // default option
+    roomEl.innerHTML = "<option value=''>-- เลือกห้อง --</option>";
 
-  rooms.forEach(r => {
-    const opt = document.createElement("option");
-    opt.value = r.room;
-    opt.textContent = `${r.room} - ${r.type}`;
-    select.appendChild(opt);
-  });
-}
+    if (!checkin || !checkout) {
+      roomEl.disabled = true;
+      return;
+    }
 
-// ===== LOAD =====
-async function load() {
-  bookingId = new URLSearchParams(window.location.search).get("id");
+    roomEl.disabled = false;
 
-  if (!bookingId) {
-    alert("ไม่พบ booking id");
-    return;
+    try {
+      const rooms = await safeApi("getAvailableRooms", { checkin, checkout });
+
+      console.log("ROOMS:", rooms);
+
+      if (!Array.isArray(rooms)) return;
+
+      rooms.forEach(r => {
+        const opt = document.createElement("option");
+        opt.value = r.room;
+        opt.textContent = `${r.room} - ${r.type}`;
+        roomEl.appendChild(opt);
+      });
+
+    } catch (e) {
+      console.error("loadAvailableRooms error:", e);
+    }
   }
 
-  const res = await safeApi("getBookingDetail", { id: bookingId });
-  const d = Array.isArray(res) ? res[0] : res;
+  // ===== LOAD BOOKING DETAIL =====
+  async function load() {
+    try {
+      bookingId = new URLSearchParams(window.location.search).get("id");
 
-  console.log("DETAIL:", d);
+      if (!bookingId) {
+        alert("ไม่พบ booking id");
+        return;
+      }
 
-  if (!d || d.error) {
-    alert("ไม่พบข้อมูล");
-    return;
+      const res = await safeApi("getBookingDetail", { id: bookingId });
+      const d = Array.isArray(res) ? res[0] : res;
+
+      console.log("DETAIL:", d);
+
+      if (!d || d.error) {
+        alert("ไม่พบข้อมูล");
+        return;
+      }
+
+      // ===== BASIC =====
+      document.getElementById("name").value = d.name || "";
+      document.getElementById("people").value = d.people || "";
+      document.getElementById("note").value = d.note || "";
+
+      // ===== DATE (ต้องมาก่อนโหลดห้อง)
+      document.getElementById("checkin").value = formatDate(d.checkin);
+      document.getElementById("checkout").value = formatDate(d.checkout);
+
+      // ===== โหลดห้องว่าง
+      await loadAvailableRooms();
+
+      // ===== SET ROOM
+      if (d.room) {
+        document.getElementById("room").value = d.room;
+      }
+
+      // ===== CHECKBOX =====
+      document.getElementById("deposit").checked = !!d.deposit;
+      document.getElementById("refund").checked = !!d.refund;
+      document.getElementById("water").checked = !!d.water;
+      document.getElementById("tissue").checked = !!d.tissue;
+
+      document.getElementById("linenDate").value = formatDate(d.linenDate);
+      document.getElementById("extra").value = d.extra || "";
+
+      // lock refund
+      if (!d.checkoutStatus) {
+        document.getElementById("refund").disabled = true;
+      }
+
+    } catch (e) {
+      console.error("LOAD ERROR:", e);
+      alert("โหลดข้อมูลไม่สำเร็จ");
+    }
   }
 
-  // ===== SET BASIC =====
-  document.getElementById("name").value = d.name || "";
-  document.getElementById("people").value = d.people || "";
-  document.getElementById("note").value = d.note || "";
+  // ===== EVENTS (ต้องหลัง DOM โหลด) =====
+  const checkinEl = document.getElementById("checkin");
+  const checkoutEl = document.getElementById("checkout");
 
-  // ===== SET DATE (สำคัญมาก ต้องมาก่อน)
-  document.getElementById("checkin").value = formatDate(d.checkin);
-  document.getElementById("checkout").value = formatDate(d.checkout);
-
-  // ===== LOAD ROOMS =====
-  await loadAvailableRooms();
-
-  // ===== SET ROOM =====
-  if (d.room) {
-    document.getElementById("room").value = d.room;
+  if (checkinEl && checkoutEl) {
+    checkinEl.addEventListener("change", loadAvailableRooms);
+    checkoutEl.addEventListener("change", loadAvailableRooms);
   }
 
-  // ===== CHECKBOX =====
-  document.getElementById("deposit").checked = !!d.deposit;
-  document.getElementById("refund").checked = !!d.refund;
-  document.getElementById("water").checked = !!d.water;
-  document.getElementById("tissue").checked = !!d.tissue;
+  // ===== INIT =====
+  load();
 
-  document.getElementById("linenDate").value = formatDate(d.linenDate);
-  document.getElementById("extra").value = d.extra || "";
-
-  if (!d.checkoutStatus) {
-    document.getElementById("refund").disabled = true;
-  }
-}
-
-// ===== EVENTS =====
-document.getElementById("checkin").addEventListener("change", loadAvailableRooms);
-document.getElementById("checkout").addEventListener("change", loadAvailableRooms);
-
-// ===== INIT =====
-load();
+});
 </script>
