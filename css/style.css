@@ -5,7 +5,24 @@ td { border:1px solid #ccc; padding:5px; }
 tr:hover {
   background:#f0f0f0;
 }
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 40px;
+  margin-top: 10px;
+}
 
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+}
+
+.checkbox-row input {
+  width: 16px;
+  height: 16px;
+}
 #global-loading {
   position: fixed;
   top:0;
