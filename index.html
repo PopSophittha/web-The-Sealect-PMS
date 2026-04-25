@@ -94,9 +94,6 @@ th, td {
 <script src="js/global.js"></script>
   
 <script>
-showLoading();
-setTimeout(hideLoading, 2000);
-  
 // ===== FORMAT DATE =====
 function formatDate(d){
   const date = new Date(d);
@@ -171,6 +168,10 @@ load();
 // 🔄 AUTO REFRESH ทุก 5 นาที
 setInterval(load, 300000);
 </script>
-
+  
+<script>
+showLoading();
+setTimeout(hideLoading, 2000);
+</script>
 </body>
 </html>
