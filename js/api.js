@@ -12,6 +12,7 @@ async function apiGet(action, params = {}) {
   });
 
   const res = await fetch(url);
+  console.log("FINAL URL:", url.toString());
   return res.json();
 }
 
