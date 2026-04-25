@@ -6,14 +6,24 @@ async function apiGet(action, params = {}) {
   url.searchParams.set("action", action);
 
   Object.entries(params || {}).forEach(([k, v]) => {
-    if (v !== undefined && v !== null) {
+    if (v !== undefined && v !== null && v !== "") {
       url.searchParams.set(k, v);
     }
   });
 
-  const res = await fetch(url);
   console.log("FINAL URL:", url.toString());
-  return res.json();
+
+  const res = await fetch(url);
+
+  // 🔥 กัน API พังแบบไม่รู้ตัว
+  if (!res.ok) {
+    throw new Error("HTTP error " + res.status);
+  }
+
+  const json = await res.json();
+  console.log("API RAW:", json);
+
+  return json;
 }
 
 // ===== POST =====
@@ -34,22 +44,27 @@ async function safeApi(action, params = {}) {
   showLoading();
 
   try {
-    // 🔥 ใช้ GET เหมือน getAvailableRooms ทุกตัว
     const res = await apiGet(action, params);
 
-    // 🔥 normalize response กันพัง
-    const data = Array.isArray(res) ? res[0] : res;
-
-    if (!data || data.error) {
-      console.warn("API error:", data);
+    // 🔥 อย่ารีบ normalize → เช็คก่อน
+    if (!res) {
+      console.warn("❌ API empty response");
       return null;
     }
+
+    if (res.error) {
+      console.error("❌ API error:", res);
+      return res; // 👈 สำคัญ: ส่งกลับไปให้หน้าเว็บเห็น
+    }
+
+    // 🔥 ค่อย normalize ตรงนี้
+    const data = Array.isArray(res) ? res[0] : res;
 
     return data;
 
   } catch (e) {
-    console.error(e);
-    alert("❌ API error");
+    console.error("❌ FETCH ERROR:", e);
+    alert("API error");
     return null;
 
   } finally {
