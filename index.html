@@ -164,7 +164,8 @@ async function load() {
 
 // ===== INIT =====
 load();
-
+showLoading();
+setTimeout(hideLoading, 2000);
 // 🔄 AUTO REFRESH ทุก 5 นาที
 setInterval(load, 300000);
 </script>
