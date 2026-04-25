@@ -5,117 +5,87 @@
 <title>Booking Detail</title>
 
 <style>
-body { font-family: Arial; background:#f5f6fa; padding:20px; }
-.container { max-width:900px; margin:auto; background:white; padding:25px; border-radius:10px; }
-.row { display:flex; gap:20px; margin-bottom:15px; }
-.col { flex:1; }
-
-input, select {
-  width:100%;
-  padding:8px;
-  border-radius:6px;
-  border:1px solid #ccc;
-}
-
-.checkbox-group {
-  display:grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap:10px 20px;
-}
-
-.checkbox-item {
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-
-.actions {
-  margin-top:20px;
-}
-
-button {
-  padding:10px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-}
-
-.save { background:#4CAF50; color:white; }
+body{font-family:Arial;background:#f5f6fa;padding:20px}
+.container{max-width:900px;margin:auto;background:#fff;padding:25px;border-radius:10px}
+.row{display:flex;gap:20px;margin-bottom:15px}
+.col{flex:1}
+input,select{width:100%;padding:8px;border-radius:6px;border:1px solid #ccc}
+.readonly{padding:8px;background:#eee;border-radius:6px}
+.checkbox-group{display:flex;flex-direction:column;gap:6px}
+.checkbox-item{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.actions{margin-top:20px;display:flex;gap:10px}
+button{padding:10px;border:none;border-radius:6px;cursor:pointer}
+.green{background:#28a745;color:#fff}
+.red{background:#dc3545;color:#fff}
+.gray{background:#aaa;color:#fff}
+.warning{color:#dc3545;font-size:13px}
 </style>
 </head>
 
 <body>
-
 <div class="container">
 
-<div style="display:flex; justify-content:space-between;">
+<div style="display:flex;justify-content:space-between">
   <h2>📋 Booking Detail</h2>
   <button id="editBtn" onclick="toggleEdit()">✏️ Edit</button>
 </div>
 
+<!-- READONLY -->
 <div class="row">
   <div class="col">
-    <label>ห้อง</label>
-    <select id="room"></select>
+    <label>Transaction ID</label>
+    <div id="transactionId" class="readonly"></div>
   </div>
   <div class="col">
-    <label>จำนวน</label>
-    <input id="people" type="number">
+    <label>Channel</label>
+    <div id="channel" class="readonly"></div>
   </div>
 </div>
 
-<label>ชื่อ</label>
-<input id="name">
-
+<!-- ROOM TYPE -->
 <div class="row">
   <div class="col">
-    <label>Check-in</label>
-    <input id="checkin" type="date">
+    <label>ประเภทห้อง</label>
+    <select id="roomType"></select>
   </div>
   <div class="col">
-    <label>Check-out</label>
-    <input id="checkout" type="date">
+    <label>หมายเลขห้อง</label>
+    <select id="room" disabled></select>
+    <div id="roomWarning" class="warning"></div>
   </div>
 </div>
 
-<label>หมายเหตุ</label>
-<input id="note">
+<input id="name" placeholder="ชื่อ">
+<div class="row">
+  <input id="checkin" type="date">
+  <input id="checkout" type="date">
+</div>
 
+<!-- STATUS -->
 <h3>💰 สถานะ</h3>
-
 <div class="checkbox-group">
-  <label class="checkbox-item">
-    <input type="checkbox" id="deposit"> มัดจำแล้ว
-  </label>
-
-  <label class="checkbox-item">
-    <input type="checkbox" id="refund"> คืนมัดจำแล้ว
-  </label>
-
-  <label class="checkbox-item">
-    <input type="checkbox" id="water" disabled> วางน้ำ
-  </label>
-
-  <label class="checkbox-item">
-    <input type="checkbox" id="tissue" disabled> วางทิชชู่
-  </label>
+  <label class="checkbox-item"><input type="checkbox" id="deposit"> มัดจำแล้ว</label>
+  <label class="checkbox-item"><input type="checkbox" id="refund"> คืนมัดจำแล้ว</label>
+  <label class="checkbox-item"><input type="checkbox" id="water" disabled> วางน้ำ</label>
+  <label class="checkbox-item"><input type="checkbox" id="tissue" disabled> วางทิชชู่</label>
 </div>
 
+<!-- FINANCE -->
+<h3>💰 การเงิน</h3>
 <div class="row">
-  <div class="col">
-    <label>เปลี่ยนผ้าปู</label>
-    <input type="date" id="linenDate">
-  </div>
-  <div class="col">
-    <label>ค่าเสียหาย</label>
-    <input type="text" id="extra">
-  </div>
+  <input id="total" placeholder="ราคาสุทธิ">
+  <select id="paymentType">
+    <option>เงินสด</option>
+    <option>โอน</option>
+  </select>
 </div>
 
+<!-- BUTTON -->
 <div class="actions">
-  <button id="saveBtn" class="save" onclick="save()" style="display:none;">
-    💾 Save
-  </button>
+  <button id="btnCheckin" class="green">Check-in</button>
+  <button id="btnCheckout" class="gray">Check-out</button>
+  <button id="btnCancel" class="red">Cancel</button>
+  <button id="saveBtn" class="green" style="display:none">Save</button>
 </div>
 
 </div>
@@ -124,124 +94,158 @@ button {
 <script src="js/api.js"></script>
 
 <script>
-let bookingId = null;
-let isEdit = false;
+let bookingId;
+let originalData;
+let allRooms = [];
+let isEdit=false;
 
-function formatDate(d){
-  if (!d) return "";
-  return new Date(d).toISOString().split("T")[0];
+// ===== LOAD =====
+async function load(){
+  bookingId = new URLSearchParams(location.search).get("id");
+  const d = await apiOne("getBookingDetail",{id:bookingId});
+  originalData = {...d};
+
+  document.getElementById("transactionId").innerText=d.id;
+  document.getElementById("channel").innerText=d.channel;
+  document.getElementById("name").value=d.name||"";
+
+  document.getElementById("checkin").value=format(d.checkin);
+  document.getElementById("checkout").value=format(d.checkout);
+
+  await loadRoomTypes(d.type,d.room);
+  updateButtons(d);
 }
 
-// ===== LOAD ROOMS =====
-async function loadAvailableRooms(selectedRoom = null) {
-  const checkin = document.getElementById("checkin").value;
-  const checkout = document.getElementById("checkout").value;
-  const select = document.getElementById("room");
+function format(d){return d?new Date(d).toISOString().split("T")[0]:""}
 
-  console.log("LOAD ROOMS WITH:", selectedRoom);
+// ===== ROOM =====
+async function loadRoomTypes(selectedType,selectedRoom){
+  allRooms = await apiList("getRooms");
 
-  select.innerHTML = "<option value=''>-- เลือกห้อง --</option>";
+  const types=[...new Set(allRooms.map(r=>r.type))];
+  const sel=document.getElementById("roomType");
+  sel.innerHTML="<option></option>";
 
-  if (!checkin || !checkout) return;
-
-  const rooms = await safeApi("getAvailableRooms", { checkin, checkout });
-
-  console.log("ROOM LIST:", rooms);
-
-  if (!Array.isArray(rooms)) return;
-
-  rooms.forEach(r => {
-    const opt = document.createElement("option");
-    opt.value = r.room;
-    opt.textContent = `${r.room} - ${r.type}`;
-    select.appendChild(opt);
+  types.forEach(t=>{
+    const o=document.createElement("option");
+    o.value=t;o.textContent=t;
+    sel.appendChild(o);
   });
 
-  // 🔥 fix ห้องเดิม
-  if (selectedRoom && !rooms.some(r => r.room === selectedRoom)) {
-    const opt = document.createElement("option");
-    opt.value = selectedRoom;
-    opt.textContent = `${selectedRoom} (เดิม)`;
-    select.appendChild(opt);
-  }
-
-  // 🔥 set ค่า (ต้องอยู่ท้ายสุดเท่านั้น)
-  select.value = selectedRoom || "";
-
-  console.log("FINAL SELECT VALUE:", select.value);
+  sel.value=selectedType||"";
+  loadRoomsByType(selectedRoom);
 }
-  
-// ===== LOAD =====
-async function load() {
-  bookingId = new URLSearchParams(window.location.search).get("id");
 
-  const res = await safeApi("getBookingDetail", { id: bookingId });
+async function loadRoomsByType(selectedRoom){
+  const type=document.getElementById("roomType").value;
+  const select=document.getElementById("room");
 
-  // 🔥 bookingDetail เป็น object อยู่แล้ว
-  const d = Array.isArray(res) ? res[0] : res;
-  
-  if (!d) {
-    alert("ไม่พบข้อมูล");
+  select.innerHTML="<option></option>";
+  if(!type){select.disabled=true;return;}
+  select.disabled=false;
+
+  const checkin=document.getElementById("checkin").value;
+  const checkout=document.getElementById("checkout").value;
+
+  const available = await apiList("getAvailableRooms",{checkin,checkout});
+
+  const rooms = allRooms
+    .filter(r=>r.type===type)
+    .filter(r=>available.some(a=>a.room===r.room) || r.room===selectedRoom);
+
+  rooms.forEach(r=>{
+    const o=document.createElement("option");
+    o.value=r.room;o.textContent=r.room;
+    select.appendChild(o);
+  });
+
+  select.value=selectedRoom||"";
+}
+
+// ===== กันจองซ้ำ =====
+async function validateRoom(){
+  const room=document.getElementById("room").value;
+  const checkin=document.getElementById("checkin").value;
+  const checkout=document.getElementById("checkout").value;
+
+  const available = await apiList("getAvailableRooms",{checkin,checkout});
+
+  const ok = available.some(r=>r.room===room);
+
+  const warn=document.getElementById("roomWarning");
+
+  if(!ok){
+    warn.innerText="⚠ ห้องนี้ไม่ว่างในช่วงเวลานี้";
+    return false;
+  }else{
+    warn.innerText="";
+    return true;
+  }
+}
+
+// ===== SAVE (diff only) =====
+function getForm(){
+  return {
+    room:room.value,
+    name:name.value,
+    total:total.value,
+    paymentType:paymentType.value,
+    deposit:deposit.checked,
+    refund:refund.checked
+  };
+}
+
+function diff(oldData,newData){
+  const c={};
+  Object.keys(newData).forEach(k=>{
+    if(String(oldData[k]??"")!==String(newData[k]??"")){
+      c[k]=newData[k];
+    }
+  });
+  return c;
+}
+
+async function save(){
+  const ok = await validateRoom();
+  if(!ok) return;
+
+  const current=getForm();
+  const changed=diff(originalData,current);
+
+  if(Object.keys(changed).length===0){
+    alert("ไม่มีการเปลี่ยน");
     return;
   }
 
-  // set ค่า
-  document.getElementById("name").value = d.name || "";
-  document.getElementById("people").value = d.people || "";
-  document.getElementById("note").value = d.note || "";
+  await apiPost("updateBooking",{id:bookingId,...changed});
+  alert("saved");
 
-  document.getElementById("checkin").value = formatDate(d.checkin);
-  document.getElementById("checkout").value = formatDate(d.checkout);
-
-  // 🔥 สำคัญ: ส่ง room เข้าไปตอนโหลด
-  await loadAvailableRooms(d.room);
-
-  console.log("SET ROOM:", d.room);
-
-  setViewMode();
+  originalData={...originalData,...changed};
 }
 
-// ===== MODE =====
-function setViewMode() {
-  document.querySelectorAll("input, select").forEach(el => el.disabled = true);
-  document.getElementById("saveBtn").style.display = "none";
+// ===== BUTTON =====
+function updateButtons(d){
+  if(!d.checkinStatus){
+    btnCheckout.disabled=true;
+    btnCancel.disabled=true;
+  }
 }
 
-function toggleEdit() {
-  isEdit = !isEdit;
-
-  document.querySelectorAll("input, select").forEach(el => el.disabled = !isEdit);
-
-  document.getElementById("water").disabled = true;
-  document.getElementById("tissue").disabled = true;
-
-  document.getElementById("saveBtn").style.display = isEdit ? "inline-block" : "none";
-  document.getElementById("editBtn").innerText = isEdit ? "❌ Cancel" : "✏️ Edit";
+function toggleEdit(){
+  isEdit=!isEdit;
+  document.querySelectorAll("input,select").forEach(el=>el.disabled=!isEdit);
+  water.disabled=true;tissue.disabled=true;
+  saveBtn.style.display=isEdit?"inline-block":"none";
 }
 
-// ===== SAVE =====
-async function save() {
-  const data = {
-    id: bookingId,
-    room: document.getElementById("room").value,
-    name: document.getElementById("name").value
-  };
+// ===== EVENT =====
+roomType.onchange=()=>loadRoomsByType();
+room.onchange=validateRoom;
+checkin.onchange=()=>loadRoomsByType(room.value);
+checkout.onchange=()=>loadRoomsByType(room.value);
+saveBtn.onclick=save;
 
-  await apiPost("updateBooking", data);
-  alert("บันทึกแล้ว");
-  toggleEdit();
-}
-
-// ===== EVENTS =====
-document.getElementById("checkin").addEventListener("change", () => {
-  loadAvailableRooms(document.getElementById("room").value);
-});
-
-document.getElementById("checkout").addEventListener("change", () => {
-  loadAvailableRooms(document.getElementById("room").value);
-});
 load();
 </script>
-
 </body>
 </html>
