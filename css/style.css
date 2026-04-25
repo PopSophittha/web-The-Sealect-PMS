@@ -2,6 +2,10 @@ body { font-family: Arial; padding:20px; }
 table { border-collapse: collapse; }
 td { border:1px solid #ccc; padding:5px; }
 
+tr:hover {
+  background:#f0f0f0;
+}
+
 #global-loading {
   position: fixed;
   top:0;
