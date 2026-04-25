@@ -1,7 +1,5 @@
-// ===== STATE =====
 let loadingCount = 0;
 
-// ===== CREATE LOADING =====
 function createLoading() {
   if (document.getElementById("global-loading")) return;
 
@@ -18,7 +16,6 @@ function createLoading() {
   document.body.appendChild(el);
 }
 
-// ===== SHOW =====
 function showLoading() {
   loadingCount++;
   createLoading();
@@ -27,7 +24,6 @@ function showLoading() {
   el.style.display = "flex";
 }
 
-// ===== HIDE =====
 function hideLoading() {
   loadingCount--;
   if (loadingCount > 0) return;
@@ -36,7 +32,6 @@ function hideLoading() {
   if (el) el.style.display = "none";
 }
 
-// ===== SAFE API =====
 async function safeApi(action, payload = null) {
   try {
     showLoading();
