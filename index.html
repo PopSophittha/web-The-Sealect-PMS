@@ -160,6 +160,7 @@ async function load() {
     renderTable(d.pendingCheckin, "checkinTable");
     renderTable(d.pendingCheckout, "checkoutTable");
 
+    console.log("pendingCheckin:", d.pendingCheckin);
   } catch (err) {
     console.error(err);
     alert("❌ โหลดข้อมูลไม่สำเร็จ\nลองรีเฟรชหน้าอีกครั้ง");
