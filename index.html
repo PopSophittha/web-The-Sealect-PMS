@@ -12,6 +12,11 @@ body { font-family: Arial; padding:20px; }
   color:white;
   padding:15px;
   font-size:24px;
+
+  display:flex;
+  justify-content:center;   /* จัดกลางแนวนอน */
+  align-items:center;       /* จัดกลางแนวตั้ง */
+  gap:10px;                 /* ระยะห่างข้อความ */
 }
 
 .cards {
@@ -51,24 +56,28 @@ th, td {
   padding:10px;
 }
 
-.checkin-header { background:#cfe5d0; }
-.checkout-header { background:#e8bcbc; }
+.checkin-header { background:#cfe5d0;
+  justify-content:center;   /* จัดกลางแนวนอน */
+  align-items:center;       /* จัดกลางแนวตั้ง */ }
+.checkout-header { background:#e8bcbc;
+  justify-content:center;   /* จัดกลางแนวนอน */
+  align-items:center;       /* จัดกลางแนวตั้ง */ }
 </style>
 </head>
 
 <body>
 
 <div class="header">
-  🏨 รายการเข้าพักประจำวัน
+  🛌 รายการเข้าพักประจำวัน
   <div id="today"></div>
 </div>
   
 <div class="cards">
-  <div class="card green">Check-in<br><h2 id="c1"></h2></div>
-  <div class="card red">Check-out<br><h2 id="c2"></h2></div>
-  <div class="card blue">Stay<br><h2 id="c3"></h2></div>
-  <div class="card">ว่าง<br><h2 id="c4"></h2></div>
-  <div class="card">สำรอง<br><h2 id="c5"></h2></div>
+  <div class="card green">📍 Check-in<br><h2 id="c1"></h2></div>
+  <div class="card red">📤 Check-out<br><h2 id="c2"></h2></div>
+  <div class="card blue">🛌 Stay<br><h2 id="c3"></h2></div>
+  <div class="card">✅ ห้องว่าง<br><h2 id="c4"></h2></div>
+  <div class="card">🚪 ห้องสำรอง<br><h2 id="c5"></h2></div>
 </div>
 
 <div class="section">
@@ -99,9 +108,9 @@ function formatDate(d){
 function renderTable(data, tableId){
   let html = `
   <tr>
-    <th>ห้อง</th><th>ชื่อ</th><th>จำนวน</th>
-    <th>เข้า</th><th>ออก</th><th>คืน</th>
-    <th>จ่าย</th><th>หมายเหตุ</th>
+    <th>เลขห้อง</th><th>ชื่อนามสกุลลูกค้า</th><th>จำนวนเข้าพัก</th>
+    <th>วันที่ check-iin</th><th>วันที่ check-out</th><th>จำนวนคืนเข้าพัก</th>
+    <th>การชำระเงิน</th><th>หมายเหตุ</th>
   </tr>`;
 
   if (!data || data.length === 0) {
