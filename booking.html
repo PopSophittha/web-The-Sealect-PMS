@@ -200,6 +200,7 @@ async function loadAvailableRooms(selectedRoom = null) {
 async function load() {
   try {
     bookingId = new URLSearchParams(window.location.search).get("id");
+    console.log("BOOKING ID:", bookingId);
 
     const d = await safeApi("getBookingDetail", { id: bookingId });
     console.log("DETAIL:", d);
