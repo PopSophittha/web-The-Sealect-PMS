@@ -37,6 +37,8 @@ function hideLoading() {
 
 // ===== SAFE API =====
 async function safeApi(action, payload = null) {
+  const start = Date.now();
+
   try {
     showLoading();
 
@@ -53,7 +55,16 @@ async function safeApi(action, payload = null) {
     console.error(err);
     alert("❌ เกิดข้อผิดพลาด");
     throw err;
+
   } finally {
-    hideLoading();
+    const elapsed = Date.now() - start;
+
+    const MIN_LOADING = 500; // 👈 อย่างน้อย 0.5 วิ
+
+    if (elapsed < MIN_LOADING) {
+      setTimeout(hideLoading, MIN_LOADING - elapsed);
+    } else {
+      hideLoading();
+    }
   }
 }
