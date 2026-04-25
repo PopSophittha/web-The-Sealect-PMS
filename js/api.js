@@ -19,3 +19,28 @@ async function apiPost(action, payload) {
   });
   return res.json();
 }
+
+async function safeApi(action, data=null) {
+  showLoading();
+
+  try {
+    let res;
+
+    if (data) {
+      res = await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({ action, data })
+      });
+    } else {
+      res = await fetch(`${API_URL}?action=${action}`);
+    }
+
+    return await res.json();
+
+  } catch (e) {
+    alert("API error");
+    console.error(e);
+  } finally {
+    hideLoading();
+  }
+}
