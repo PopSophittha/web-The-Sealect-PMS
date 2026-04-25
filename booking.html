@@ -275,43 +275,90 @@ async function validateRoom(){
 // ===== SAVE =====
 async function save(){
 
+  // กันเลือกห้องทับ
   const ok = await validateRoom();
   if(!ok){
     alert("❌ ห้องนี้ไม่ว่าง");
     return;
   }
 
+  // 🔥 helper แปลงวันที่ให้ backend รับง่าย
+  const toDate = (v) => v ? new Date(v).toISOString() : "";
+
+  // 🔥 รวมข้อมูลเดิม + ใหม่ (กันข้อมูลหาย)
   const data = {
     ...originalData,
 
-    room: document.getElementById("room").value,
-    type: document.getElementById("roomType").value,
-    name: document.getElementById("name").value,
-    checkin: document.getElementById("checkin").value,
-    checkout: document.getElementById("checkout").value,
-    note: document.getElementById("note").value,
+    // --- A-AC ครบตาม schema ---
+    // A (0) ลำดับ -> ไม่ต้องส่ง/ไม่แก้
+    id: originalData.id,                       // B (1)
 
-    total: document.getElementById("total").value,
-    paymentType: document.getElementById("paymentType").value,
+    room: document.getElementById("room").value,            // C (2)
+    type: document.getElementById("roomType").value,        // D (3)
+    // E (4) unused
 
-    deposit: document.getElementById("deposit").checked,
-    refund: document.getElementById("refund").checked,
+    name: document.getElementById("name").value,            // F (5)
+    people: originalData.people,                             // G (6) (ไม่มี input ก็ใช้เดิม)
+    channel: originalData.channel,                           // H (7)
 
-    linenDate: document.getElementById("linenDate").value,
-    extra: document.getElementById("extra").value
+    checkin: toDate(document.getElementById("checkin").value),   // I (8)
+    checkout: toDate(document.getElementById("checkout").value), // J (9)
+
+    // K (10) nights → คำนวณใหม่
+    nights: calcNights(
+      document.getElementById("checkin").value,
+      document.getElementById("checkout").value
+    ),
+
+    // L (11) unused
+
+    price: originalData.price,                               // M (12)
+    discount: originalData.discount,                         // N (13)
+    total: document.getElementById("total").value,           // O (14)
+
+    paymentType: document.getElementById("paymentType").value, // P (15)
+
+    // Q (16), R (17) unused
+
+    checkinStatus: originalData.checkinStatus,               // S (18)
+    checkoutStatus: originalData.checkoutStatus,             // T (19)
+    cancel: originalData.cancel,                             // U (20)
+
+    // V (21) unused
+
+    note: document.getElementById("note").value,             // W (22)
+
+    deposit: document.getElementById("deposit").checked,     // X (23)
+    refund: document.getElementById("refund").checked,       // Y (24)
+
+    extra: document.getElementById("extra").value,           // Z (25)
+
+    water: originalData.water,                               // AA (26)
+    tissue: originalData.tissue,                             // AB (27)
+
+    linenDate: toDate(document.getElementById("linenDate").value) // AC (28)
   };
 
-  console.log("SAVE:", data);
+  console.log("SAVE FINAL:", data);
 
-  const res = await apiPost("updateBooking", data);
+  try{
+    const res = await apiPost("updateBooking", data);
 
-  if(res?.error){
-    alert("❌ "+res.error);
-    return;
+    if(res?.error){
+      alert("❌ " + res.error);
+      return;
+    }
+
+    // ✅ popup สำเร็จ
+    showSuccess("บันทึกสำเร็จ");
+
+    // reload ให้เห็นค่าล่าสุด
+    setTimeout(()=>location.reload(), 800);
+
+  }catch(e){
+    console.error(e);
+    alert("❌ save error");
   }
-
-  alert("✅ บันทึกแล้ว");
-  location.reload();
 }
 
 // ===== BUTTON =====
