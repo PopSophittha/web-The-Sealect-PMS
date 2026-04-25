@@ -1,124 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Booking Detail</title>
+
+<style>
+body {
+  font-family: Arial;
+  padding:20px;
+  background:#f5f6fa;
+}
+
+.container {
+  max-width:900px;
+  margin:auto;
+  background:white;
+  padding:25px;
+  border-radius:10px;
+}
+
+.row {
+  display:flex;
+  gap:20px;
+  margin-bottom:15px;
+}
+
+.col { flex:1; }
+
+input, select {
+  width:100%;
+  padding:8px;
+  border-radius:6px;
+  border:1px solid #ccc;
+}
+
+.checkbox-group {
+  display:grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap:10px 20px;
+}
+
+.checkbox-item {
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.actions {
+  margin-top:20px;
+  display:flex;
+  gap:10px;
+}
+
+button {
+  padding:10px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+.save { background:#4CAF50; color:white; }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>📋 Booking Detail</h2>
+
+<div class="row">
+  <div class="col">
+    <label>ห้อง</label>
+    <select id="room"></select>
+  </div>
+  <div class="col">
+    <label>จำนวน</label>
+    <input id="people" type="number">
+  </div>
+</div>
+
+<label>ชื่อ</label>
+<input id="name">
+
+<div class="row">
+  <div class="col">
+    <label>Check-in</label>
+    <input id="checkin" type="date">
+  </div>
+  <div class="col">
+    <label>Check-out</label>
+    <input id="checkout" type="date">
+  </div>
+</div>
+
+<label>หมายเหตุ</label>
+<input id="note">
+
+<h3>💰 สถานะ</h3>
+
+<div class="checkbox-group">
+  <div class="checkbox-item"><input type="checkbox" id="deposit"> มัดจำ</div>
+  <div class="checkbox-item"><input type="checkbox" id="refund"> คืนมัดจำ</div>
+  <div class="checkbox-item"><input type="checkbox" id="water" disabled> น้ำ</div>
+  <div class="checkbox-item"><input type="checkbox" id="tissue" disabled> ทิชชู่</div>
+</div>
+
+<div class="row">
+  <div class="col">
+    <label>เปลี่ยนผ้าปู</label>
+    <input type="date" id="linenDate">
+  </div>
+  <div class="col">
+    <label>ค่าเสียหาย</label>
+    <input type="text" id="extra">
+  </div>
+</div>
+
+<div class="actions">
+  <button class="save" onclick="save()">💾 Save</button>
+</div>
+
+</div>
+
+<!-- 🔥 ย้าย script มาล่างสุด -->
+<script src="js/api.js"></script>
+<script src="js/global.js"></script>
+
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+let bookingId = null;
 
-  let bookingId = null;
+// ===== FORMAT DATE =====
+function formatDate(d){
+  if (!d) return "";
+  const date = new Date(d);
+  if (isNaN(date)) return "";
+  return date.toISOString().split("T")[0];
+}
 
-  // ===== FORMAT DATE =====
-  function formatDate(d){
-    if (!d) return "";
-    const date = new Date(d);
-    if (isNaN(date)) return "";
-    return date.toISOString().split("T")[0];
+// ===== LOAD ROOMS =====
+async function loadAvailableRooms() {
+  const checkin = document.getElementById("checkin").value;
+  const checkout = document.getElementById("checkout").value;
+  const select = document.getElementById("room");
+
+  select.innerHTML = "<option value=''>-- เลือกห้อง --</option>";
+
+  if (!checkin || !checkout) return;
+
+  const rooms = await safeApi("getAvailableRooms", { checkin, checkout });
+
+  if (!Array.isArray(rooms)) return;
+
+  rooms.forEach(r => {
+    const opt = document.createElement("option");
+    opt.value = r.room;
+    opt.textContent = r.room + " - " + r.type;
+    select.appendChild(opt);
+  });
+}
+
+// ===== LOAD =====
+async function load() {
+  bookingId = new URLSearchParams(window.location.search).get("id");
+
+  const res = await safeApi("getBookingDetail", { id: bookingId });
+  const d = Array.isArray(res) ? res[0] : res;
+
+  console.log(d);
+
+  if (!d) {
+    alert("ไม่พบข้อมูล");
+    return;
   }
 
-  // ===== LOAD AVAILABLE ROOMS =====
-  async function loadAvailableRooms() {
-    const checkinEl = document.getElementById("checkin");
-    const checkoutEl = document.getElementById("checkout");
-    const roomEl = document.getElementById("room");
+  document.getElementById("name").value = d.name || "";
+  document.getElementById("people").value = d.people || "";
+  document.getElementById("note").value = d.note || "";
 
-    if (!checkinEl || !checkoutEl || !roomEl) return;
+  document.getElementById("checkin").value = formatDate(d.checkin);
+  document.getElementById("checkout").value = formatDate(d.checkout);
 
-    const checkin = checkinEl.value;
-    const checkout = checkoutEl.value;
+  await loadAvailableRooms();
 
-    // default option
-    roomEl.innerHTML = "<option value=''>-- เลือกห้อง --</option>";
+  document.getElementById("room").value = d.room || "";
 
-    if (!checkin || !checkout) {
-      roomEl.disabled = true;
-      return;
-    }
+  document.getElementById("deposit").checked = !!d.deposit;
+  document.getElementById("refund").checked = !!d.refund;
+  document.getElementById("water").checked = !!d.water;
+  document.getElementById("tissue").checked = !!d.tissue;
 
-    roomEl.disabled = false;
+  document.getElementById("linenDate").value = formatDate(d.linenDate);
+  document.getElementById("extra").value = d.extra || "";
+}
 
-    try {
-      const rooms = await safeApi("getAvailableRooms", { checkin, checkout });
+// ===== EVENTS =====
+document.getElementById("checkin").addEventListener("change", loadAvailableRooms);
+document.getElementById("checkout").addEventListener("change", loadAvailableRooms);
 
-      console.log("ROOMS:", rooms);
+// ===== SAVE =====
+async function save() {
+  const data = {
+    id: bookingId,
+    room: document.getElementById("room").value,
+    name: document.getElementById("name").value
+  };
 
-      if (!Array.isArray(rooms)) return;
+  await apiPost("updateBooking", data);
+  alert("บันทึกแล้ว");
+}
 
-      rooms.forEach(r => {
-        const opt = document.createElement("option");
-        opt.value = r.room;
-        opt.textContent = `${r.room} - ${r.type}`;
-        roomEl.appendChild(opt);
-      });
-
-    } catch (e) {
-      console.error("loadAvailableRooms error:", e);
-    }
-  }
-
-  // ===== LOAD BOOKING DETAIL =====
-  async function load() {
-    try {
-      bookingId = new URLSearchParams(window.location.search).get("id");
-
-      if (!bookingId) {
-        alert("ไม่พบ booking id");
-        return;
-      }
-
-      const res = await safeApi("getBookingDetail", { id: bookingId });
-      const d = Array.isArray(res) ? res[0] : res;
-
-      console.log("DETAIL:", d);
-
-      if (!d || d.error) {
-        alert("ไม่พบข้อมูล");
-        return;
-      }
-
-      // ===== BASIC =====
-      document.getElementById("name").value = d.name || "";
-      document.getElementById("people").value = d.people || "";
-      document.getElementById("note").value = d.note || "";
-
-      // ===== DATE (ต้องมาก่อนโหลดห้อง)
-      document.getElementById("checkin").value = formatDate(d.checkin);
-      document.getElementById("checkout").value = formatDate(d.checkout);
-
-      // ===== โหลดห้องว่าง
-      await loadAvailableRooms();
-
-      // ===== SET ROOM
-      if (d.room) {
-        document.getElementById("room").value = d.room;
-      }
-
-      // ===== CHECKBOX =====
-      document.getElementById("deposit").checked = !!d.deposit;
-      document.getElementById("refund").checked = !!d.refund;
-      document.getElementById("water").checked = !!d.water;
-      document.getElementById("tissue").checked = !!d.tissue;
-
-      document.getElementById("linenDate").value = formatDate(d.linenDate);
-      document.getElementById("extra").value = d.extra || "";
-
-      // lock refund
-      if (!d.checkoutStatus) {
-        document.getElementById("refund").disabled = true;
-      }
-
-    } catch (e) {
-      console.error("LOAD ERROR:", e);
-      alert("โหลดข้อมูลไม่สำเร็จ");
-    }
-  }
-
-  // ===== EVENTS (ต้องหลัง DOM โหลด) =====
-  const checkinEl = document.getElementById("checkin");
-  const checkoutEl = document.getElementById("checkout");
-
-  if (checkinEl && checkoutEl) {
-    checkinEl.addEventListener("change", loadAvailableRooms);
-    checkoutEl.addEventListener("change", loadAvailableRooms);
-  }
-
-  // ===== INIT =====
-  load();
-
-});
+// ===== INIT =====
+load();
 </script>
+
+</body>
+</html>
