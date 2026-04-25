@@ -1,0 +1,38 @@
+<h1>Booking Detail</h1>
+
+<input id="name" placeholder="Name">
+<input id="room" placeholder="Room">
+<input id="checkin" type="date">
+<input id="checkout" type="date">
+
+<button onclick="save()">Save</button>
+
+<script src="js/api.js"></script>
+<script>
+const id = new URLSearchParams(location.search).get("id");
+
+if (id) {
+  apiGet("getBooking", { id }).then(d => {
+    document.getElementById("name").value = d[5];
+    document.getElementById("room").value = d[2];
+  });
+}
+
+function save() {
+  const data = {
+    id,
+    name: document.getElementById("name").value,
+    room: document.getElementById("room").value,
+    checkin: document.getElementById("checkin").value,
+    checkout: document.getElementById("checkout").value
+  };
+
+  if (id) {
+    apiPost("updateBooking", data);
+  } else {
+    apiPost("createBooking", data);
+  }
+
+  alert("saved");
+}
+</script>
