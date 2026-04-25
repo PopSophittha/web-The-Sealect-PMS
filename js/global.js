@@ -22,9 +22,48 @@ function createLoading() {
 }
 
 function showLoading() {
-  loadingCount++;
-  const el = createLoading();
+  let el = document.getElementById("global-loading");
+
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "global-loading";
+
+    el.innerHTML = `
+      <div class="loading-backdrop"></div>
+      <div class="loading-content">
+        <div class="spinner"></div>
+      </div>
+    `;
+
+    document.body.appendChild(el);
+  }
+
+  // 🔥 บังคับ style ตรงนี้เลย
   el.style.display = "flex";
+  el.style.position = "fixed";
+  el.style.top = "0";
+  el.style.left = "0";
+  el.style.width = "100%";
+  el.style.height = "100%";
+  el.style.alignItems = "center";
+  el.style.justifyContent = "center";
+  el.style.zIndex = "999999";
+
+  // backdrop
+  const bg = el.querySelector(".loading-backdrop");
+  bg.style.position = "absolute";
+  bg.style.width = "100%";
+  bg.style.height = "100%";
+  bg.style.background = "rgba(0,0,0,0.5)";
+
+  // spinner
+  const sp = el.querySelector(".spinner");
+  sp.style.width = "60px";
+  sp.style.height = "60px";
+  sp.style.border = "6px solid #ddd";
+  sp.style.borderTop = "6px solid #4a7bd0";
+  sp.style.borderRadius = "50%";
+  sp.style.animation = "spin 0.8s linear infinite";
 }
 
 function hideLoading() {
