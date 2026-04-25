@@ -2,217 +2,179 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Booking Detail</title>
+<title>Dashboard</title>
 
 <style>
-body {
-  font-family: Arial;
-  padding:20px;
-  background:#f5f6fa;
+body { font-family: Arial; padding:20px; }
+
+.header {
+  background:#4a7bd0;
+  color:white;
+  padding:15px;
+  font-size:24px;
+
+  display:flex;
+  justify-content:center;   /* จัดกลางแนวนอน */
+  align-items:center;       /* จัดกลางแนวตั้ง */
+  gap:10px;                 /* ระยะห่างข้อความ */
 }
 
-.container {
-  max-width:900px;
-  margin:auto;
-  background:white;
-  padding:25px;
-  border-radius:10px;
-}
-
-.row {
+.cards {
   display:flex;
   gap:20px;
-  margin-bottom:15px;
+  margin:20px 0;
 }
 
-.col { flex:1; }
+.card {
+  padding:15px;
+  border-radius:10px;
+  text-align:center;
+  flex:1;
+}
 
-input, select {
+.green { background:#d4edda; }
+.red { background:#f8d7da; }
+.blue { background:#d1ecf1; }
+
+table {
   width:100%;
-  padding:8px;
-  border-radius:6px;
+  border-collapse: collapse;
+  margin-top:10px;
+}
+
+th, td {
   border:1px solid #ccc;
+  padding:5px;
+  text-align:center;
 }
 
-.checkbox-group {
-  display:grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap:10px 20px;
-}
-
-.checkbox-item {
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-
-.actions {
+.section {
   margin-top:20px;
-  display:flex;
-  gap:10px;
 }
 
-button {
+.section h3 {
   padding:10px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
 }
 
-.save { background:#4CAF50; color:white; }
+.checkin-header { background:#cfe5d0;
+  justify-content:center;   /* จัดกลางแนวนอน */
+  align-items:center;       /* จัดกลางแนวตั้ง */ }
+.checkout-header { background:#e8bcbc;
+  justify-content:center;   /* จัดกลางแนวนอน */
+  align-items:center;       /* จัดกลางแนวตั้ง */ }
 </style>
 </head>
 
 <body>
-
-<div class="container">
-
-<h2>📋 Booking Detail</h2>
-
-<div class="row">
-  <div class="col">
-    <label>ห้อง</label>
-    <select id="room"></select>
-  </div>
-  <div class="col">
-    <label>จำนวน</label>
-    <input id="people" type="number">
-  </div>
+<th>version 1.0.3</th><br>
+<div class="header">
+  🛌 รายการเข้าพักประจำวัน
+  <div id="today"></div>
+</div>
+  
+<div class="cards">
+  <div class="card green">📍 Check-in<br><h2 id="c1"></h2></div>
+  <div class="card red">📤 Check-out<br><h2 id="c2"></h2></div>
+  <div class="card blue">🛌 Stay<br><h2 id="c3"></h2></div>
+  <div class="card">✅ ห้องว่าง<br><h2 id="c4"></h2></div>
+  <div class="card">🚪 ห้องสำรอง<br><h2 id="c5"></h2></div>
 </div>
 
-<label>ชื่อ</label>
-<input id="name">
-
-<div class="row">
-  <div class="col">
-    <label>Check-in</label>
-    <input id="checkin" type="date">
-  </div>
-  <div class="col">
-    <label>Check-out</label>
-    <input id="checkout" type="date">
-  </div>
+<div class="section">
+  <h3 class="checkin-header">ห้องพักที่ยังไม่ได้ Check-in</h3>
+  <table id="checkinTable"></table>
 </div>
 
-<label>หมายเหตุ</label>
-<input id="note">
-
-<h3>💰 สถานะ</h3>
-
-<div class="checkbox-group">
-  <div class="checkbox-item"><input type="checkbox" id="deposit"> มัดจำ</div>
-  <div class="checkbox-item"><input type="checkbox" id="refund"> คืนมัดจำ</div>
-  <div class="checkbox-item"><input type="checkbox" id="water" disabled> น้ำ</div>
-  <div class="checkbox-item"><input type="checkbox" id="tissue" disabled> ทิชชู่</div>
+<div class="section">
+  <h3 class="checkout-header">ห้องพักที่ยังไม่ได้ Check-out</h3>
+  <table id="checkoutTable"></table>
 </div>
 
-<div class="row">
-  <div class="col">
-    <label>เปลี่ยนผ้าปู</label>
-    <input type="date" id="linenDate">
-  </div>
-  <div class="col">
-    <label>ค่าเสียหาย</label>
-    <input type="text" id="extra">
-  </div>
-</div>
-
-<div class="actions">
-  <button class="save" onclick="save()">💾 Save</button>
-</div>
-
-</div>
-
-<!-- 🔥 ย้าย script มาล่างสุด -->
 <script src="js/api.js"></script>
-<script src="js/global.js"></script>
-
+<script src="js/global.js?v=2"></script>
+  
 <script>
-let bookingId = null;
-
+function goBooking(id){
+    console.log("CLICK ID:", id);
+  window.location.href = `booking.html?id=${id}`;
+}
+  
 // ===== FORMAT DATE =====
 function formatDate(d){
-  if (!d) return "";
   const date = new Date(d);
-  if (isNaN(date)) return "";
-  return date.toISOString().split("T")[0];
+  return date.toLocaleDateString("th-TH", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  });
 }
 
-// ===== LOAD ROOMS =====
-async function loadAvailableRooms() {
-  const checkin = document.getElementById("checkin").value;
-  const checkout = document.getElementById("checkout").value;
-  const select = document.getElementById("room");
+// ===== RENDER TABLE =====
+function renderTable(data, tableId){
+  let html = `
+  <tr>
+    <th>เลขห้อง</th><th>ชื่อนามสกุลลูกค้า</th><th>จำนวนเข้าพัก</th>
+    <th>วันที่ check-iin</th><th>วันที่ check-out</th><th>จำนวนคืนเข้าพัก</th>
+    <th>การชำระเงิน</th><th>หมายเหตุ</th>
+  </tr>`;
 
-  select.innerHTML = "<option value=''>-- เลือกห้อง --</option>";
+  if (!data || data.length === 0) {
+    html += `<tr><td colspan="8" style="color:#888">ไม่มีรายการ</td></tr>`;
+  } else {
+    data.forEach(r => {
+      html += `
+      <tr onclick="goBooking('${r.id}')" style="cursor:pointer">
+        <td>${r.room}</td>
+        <td>${r.name}</td>
+        <td>${r.people}</td>
+        <td>${formatDate(r.checkinDate)}</td>
+        <td>${formatDate(r.checkoutDate)}</td>
+        <td>${r.nights}</td>
+        <td>${r.payment || ""}</td>
+        <td>${r.note || ""}</td>
+      </tr>`;
+    });
+  }
 
-  if (!checkin || !checkout) return;
-
-  const rooms = await safeApi("getAvailableRooms", { checkin, checkout });
-
-  if (!Array.isArray(rooms)) return;
-
-  rooms.forEach(r => {
-    const opt = document.createElement("option");
-    opt.value = r.room;
-    opt.textContent = r.room + " - " + r.type;
-    select.appendChild(opt);
-  });
+  document.getElementById(tableId).innerHTML = html;
 }
 
 // ===== LOAD =====
 async function load() {
-  bookingId = new URLSearchParams(window.location.search).get("id");
+  try {
+    const d = await safeApi("getDashboard");
 
-  const res = await safeApi("getBookingDetail", { id: bookingId });
-  const d = Array.isArray(res) ? res[0] : res;
+    if (!d) throw new Error("ไม่มีข้อมูลจาก API");
 
-  console.log(d);
+    // date
+    document.getElementById("today").innerText =
+      new Date().toLocaleDateString("th-TH");
 
-  if (!d) {
-    alert("ไม่พบข้อมูล");
-    return;
+    // cards
+    document.getElementById("c1").innerText = d.checkin ?? 0;
+    document.getElementById("c2").innerText = d.checkout ?? 0;
+    document.getElementById("c3").innerText = d.stay ?? 0;
+    document.getElementById("c4").innerText = d.available ?? 0;
+    document.getElementById("c5").innerText = d.reservedRooms ?? 0;
+
+    // tables
+    renderTable(d.pendingCheckin, "checkinTable");
+    renderTable(d.pendingCheckout, "checkoutTable");
+  } catch (err) {
+    console.error(err);
+    alert("❌ โหลดข้อมูลไม่สำเร็จ\nลองรีเฟรชหน้าอีกครั้ง");
   }
-
-  document.getElementById("name").value = d.name || "";
-  document.getElementById("people").value = d.people || "";
-  document.getElementById("note").value = d.note || "";
-
-  document.getElementById("checkin").value = formatDate(d.checkin);
-  document.getElementById("checkout").value = formatDate(d.checkout);
-
-  await loadAvailableRooms();
-
-  document.getElementById("room").value = d.room || "";
-
-  document.getElementById("deposit").checked = !!d.deposit;
-  document.getElementById("refund").checked = !!d.refund;
-  document.getElementById("water").checked = !!d.water;
-  document.getElementById("tissue").checked = !!d.tissue;
-
-  document.getElementById("linenDate").value = formatDate(d.linenDate);
-  document.getElementById("extra").value = d.extra || "";
-}
-
-// ===== EVENTS =====
-document.getElementById("checkin").addEventListener("change", loadAvailableRooms);
-document.getElementById("checkout").addEventListener("change", loadAvailableRooms);
-
-// ===== SAVE =====
-async function save() {
-  const data = {
-    id: bookingId,
-    room: document.getElementById("room").value,
-    name: document.getElementById("name").value
-  };
-
-  await apiPost("updateBooking", data);
-  alert("บันทึกแล้ว");
 }
 
 // ===== INIT =====
 load();
-</script>
+  
+// 🔄 AUTO REFRESH ทุก 5 นาที
+setInterval(load, 300000);
 
+  showLoading();
+setTimeout(hideLoading, 2000);
+</script>
+  
 </body>
 </html>
