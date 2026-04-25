@@ -175,8 +175,11 @@ async function loadAvailableRooms(selectedRoom = null) {
 async function load() {
   bookingId = new URLSearchParams(window.location.search).get("id");
 
-  const d = await safeApi("getBookingDetail", { id: bookingId });
+  const res = await safeApi("getBookingDetail", { id: bookingId });
 
+  // 🔥 bookingDetail เป็น object อยู่แล้ว
+  const d = Array.isArray(res) ? res[0] : res;
+  
   if (!d) {
     alert("ไม่พบข้อมูล");
     return;
